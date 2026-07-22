@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Edit profile · CourseShare Hub{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-md-6">
+  <div class="card shadow-sm"><div class="card-body p-4">
+    <h1 class="h4 mb-4">Edit profile</h1>
+    {# enctype is required so the avatar file actually uploads #}
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      {% include 'partials/_form.html' %}
+      <button class="btn btn-primary" type="submit">Save</button>
+      <a class="btn btn-link" href="{% url 'profile' %}">Cancel</a>
+    </form>
+  </div></div>
+</div></div>
+{% endblock %}

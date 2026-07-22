@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Browse resources · CourseShare Hub{% endblock %}
+{% block content %}
+<h1 class="h3 mb-4">Browse resources</h1>
+<div class="row">
+
+  {# ---- Filter sidebar (keyword + 4 dropdowns) ---- #}
+  <div class="col-lg-3 mb-4">
+    <form method="get" class="card card-body shadow-sm">
+      {% include 'partials/_form.html' with form=form %}
+      <button class="btn btn-primary w-100" type="submit">Apply</button>
+      <a href="{% url 'resource_list' %}" class="btn btn-link w-100">Clear</a>
+    </form>
+  </div>
+
+  {# ---- Results grid ---- #}
+  <div class="col-lg-9">
+    <p class="text-muted">{{ paginator.count }} result{{ paginator.count|pluralize }}</p>
+    <div class="row row-cols-1 row-cols-md-2 g-3">
+      {% for resource in resources %}
+        <div class="col">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body">
+              <div class="d-flex justify-content-between">
+                <span class="badge bg-primary">{{ resource.category.name }}</span>
+                <span class="badge bg-secondary">{{ resource.get_file_type_display }}</span>
+              </div>
+              <h2 class="h5 mt-2">
+                <a href="{% url 'resource_detail' resource.pk %}" class="text-decoration-none">{{ resource.title }}</a>
+              </h2>
+              <p class="small text-muted mb-1">
+                {% if resource.course %}{{ resource.course.code }} · {% endif %}by {{ resource.uploader.username }}
+              </p>
+              <p class="small mb-0">{{ resource.description|truncatewords:18 }}</p>
+            </div>
+            <div class="card-footer d-flex justify-content-between small text-muted">
+              <span>&#128065; {{ resource.views_count }}</span>
+              <span>{{ resource.created_at|date:"M d, Y" }}</span>
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="col-12">
+          <div class="alert alert-info mb-0">No resources match your search. Try different keywords or clear the filters.</div>
+        </div>
+      {% endfor %}
+    </div>
+
+    {# ---- Pagination (preserves the active filters across pages) ---- #}
+    {% if is_paginated %}
+      <nav class="mt-4"><ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for k, v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v|urlencode }}{% endif %}{% endfor %}">Previous</a>
+          </li>
+        {% endif %}
+        <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} of {{ paginator.num_pages }}</span></li>
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for k, v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v|urlencode }}{% endif %}{% endfor %}">Next</a>
+          </li>
+        {% endif %}
+      </ul></nav>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,128 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}CourseShare Hub{% endblock %}</title>
+
+  {% comment %} Bootstrap 5 via CDN. TODO(Zhihan): for an offline-safe live demo,
+     download these into static/ and switch to the static template tag. {% endcomment %}
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+  {% comment %} NAVBAR — demonstrates the GUEST vs REGISTERED interface split
+     (PROJECT_PLAN §5.6): the is_authenticated branches below drive the nav. {% endcomment %}
+  <nav class="navbar navbar-expand-lg navbar-dark app-navbar">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="{% url 'home' %}">📚 CourseShare Hub</a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+              data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false"
+              aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="mainNav">
+        {# Global search bar — submits to the browse page's ?q= filter (§5.3). #}
+        <form class="d-flex mx-lg-auto my-2 my-lg-0" role="search" action="{% url 'resource_list' %}" method="get">
+          <input class="form-control me-2" type="search" name="q" placeholder="Search resources…" aria-label="Search">
+          <button class="btn btn-warning" type="submit">Search</button>
+        </form>
+
+        <ul class="navbar-nav ms-auto align-items-lg-center">
+          <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'resource_list' %}">Browse</a></li>
+
+          {% if user.is_authenticated %}
+            {# ---- REGISTERED-ONLY ---- #}
+            <li class="nav-item"><a class="nav-link" href="{% url 'resource_create' %}">Upload</a></li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" role="button"
+                 data-bs-toggle="dropdown" aria-expanded="false">{{ user.username }}</a>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="{% url 'profile' %}">My Profile</a></li>
+                <li><a class="dropdown-item" href="{% url 'history' %}">My History</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  {# Django 6 logout is POST-only — must be a form, not a link. #}
+                  <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="dropdown-item">Log out</button>
+                  </form>
+                </li>
+              </ul>
+            </li>
+          {% else %}
+            {# ---- GUEST-ONLY ---- #}
+            <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
+            <li class="nav-item"><a class="btn btn-warning btn-sm ms-lg-2" href="{% url 'register' %}">Register</a></li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  {# Flash messages (used across auth, uploads, favourites, etc.) #}
+  {% if messages %}
+    <div class="container mt-3">
+      {% for m in messages %}
+        <div class="alert alert-{{ m.tags }} alert-dismissible fade show" role="alert">
+          {{ m }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {# =========================== PAGE CONTENT =========================== #}
+  <main class="container flex-grow-1 py-4">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% comment %} FOOTER — the rubric grades a complete footer aligned with the
+     theme (§6). {% endcomment %}
+  <footer class="app-footer mt-auto">
+    <div class="container py-4">
+      <div class="row gy-4">
+        <div class="col-md-4">
+          <h5 class="fw-bold">📚 CourseShare Hub</h5>
+          <p class="small mb-0">A centralised, searchable platform to upload,
+            organise, and revisit course materials together.</p>
+        </div>
+        <div class="col-6 col-md-2">
+          <h6 class="text-uppercase small fw-bold">Quick Links</h6>
+          <ul class="list-unstyled small">
+            <li><a href="{% url 'home' %}">Home</a></li>
+            <li><a href="{% url 'resource_list' %}">Browse</a></li>
+            <li><a href="{% url 'resource_create' %}">Upload</a></li>
+          </ul>
+        </div>
+        <div class="col-6 col-md-2">
+          <h6 class="text-uppercase small fw-bold">Company</h6>
+          <ul class="list-unstyled small">
+            <li><a href="#">About Us</a></li>{# TODO(Zhihan) #}
+            <li><a href="#">Team</a></li>{# TODO(Zhihan) #}
+            <li><a href="{% url 'contact' %}">Contact Us</a></li>
+          </ul>
+        </div>
+        <div class="col-md-4">
+          <h6 class="text-uppercase small fw-bold">Contact</h6>
+          <p class="small mb-1">School of Computer Science, University of Windsor</p>
+          <p class="small mb-0">COMP-8347 · Internet Applications &amp; Distributed Systems</p>
+          {# TODO(Zhihan): social icons (Bootstrap Icons) #}
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom text-center py-3 small">
+      © 2026 CourseShare Hub · COMP-8347 · Group Project{% if visit_stats %} · You've visited {{ visit_stats.daily }} time{{ visit_stats.daily|pluralize }} today{% endif %}
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

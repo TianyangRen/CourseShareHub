@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Delete resource · CourseShare Hub{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-md-6">
+  <div class="card border-danger shadow-sm"><div class="card-body">
+    <h1 class="h5 text-danger">Delete resource</h1>
+    <p>Are you sure you want to delete
+       "<strong>{{ object.title }}</strong>"? This action cannot be undone.</p>
+    <form method="post">
+      {% csrf_token %}
+      <button class="btn btn-danger" type="submit">Yes, delete</button>
+      <a class="btn btn-secondary" href="{% url 'resource_detail' object.pk %}">Cancel</a>
+    </form>
+  </div></div>
+</div></div>
+{% endblock %}

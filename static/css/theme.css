@@ -1,0 +1,29 @@
+/* ============================================================================
+   CourseShare Hub — theme.  OWNER: Zhihan (UI/UX, PROJECT_PLAN §6).
+   This is a STARTING palette + the navbar/footer colours only.
+   Expand it: cards, buttons, hover states, spacing, responsive polish.
+   ========================================================================== */
+:root {
+  --cs-primary: #4F46E5;       /* indigo   */
+  --cs-primary-dark: #4338CA;
+  --cs-accent: #F59E0B;        /* amber    */
+  --cs-dark: #1E293B;          /* text     */
+  --cs-muted: #64748B;
+  --cs-bg: #F8FAFC;
+}
+
+body { background: var(--cs-bg); color: var(--cs-dark); }
+
+/* Navbar */
+.app-navbar { background: var(--cs-primary); }
+.app-navbar .navbar-brand,
+.app-navbar .nav-link { color: #fff; }
+.app-navbar .nav-link:hover { color: var(--cs-accent); }
+
+/* Footer */
+.app-footer { background: var(--cs-dark); color: #cbd5e1; }
+.app-footer a { color: #cbd5e1; text-decoration: none; }
+.app-footer a:hover { color: #fff; }
+.footer-bottom { background: #0f172a; color: #94a3b8; }
+
+/* TODO(Zhihan): .resource-card, .btn-primary override, category cards, etc. */

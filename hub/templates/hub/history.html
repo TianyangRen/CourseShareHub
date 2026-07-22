@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}My History · CourseShare Hub{% endblock %}
+{% block content %}
+<h1 class="h3 mb-4">My Activity</h1>
+
+{# ---- stat tiles (cookie-based visit counts + session/DB counts) ---- #}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3"><div class="card text-center shadow-sm"><div class="card-body">
+    <div class="display-6">{{ visit_stats.daily|default:"0" }}</div>
+    <div class="text-muted small">Visits today</div>
+  </div></div></div>
+  <div class="col-6 col-md-3"><div class="card text-center shadow-sm"><div class="card-body">
+    <div class="display-6">{{ visit_stats.total|default:"0" }}</div>
+    <div class="text-muted small">Total visits</div>
+  </div></div></div>
+  <div class="col-6 col-md-3"><div class="card text-center shadow-sm"><div class="card-body">
+    <div class="display-6">{{ recently_viewed|length }}</div>
+    <div class="text-muted small">Recently viewed</div>
+  </div></div></div>
+  <div class="col-6 col-md-3"><div class="card text-center shadow-sm"><div class="card-body">
+    <div class="display-6">{{ history|length }}</div>
+    <div class="text-muted small">Logged actions</div>
+  </div></div></div>
+</div>
+
+<div class="d-flex justify-content-end mb-3">
+  <form method="post" action="{% url 'clear_history' %}">
+    {% csrf_token %}
+    <button class="btn btn-outline-danger btn-sm">Clear browsing history</button>
+  </form>
+</div>
+
+<div class="row">
+  <div class="col-md-6 mb-4">
+    <h2 class="h5">Visits per day</h2>
+    <ul class="list-group">
+      {% for log in daily_logs %}
+        <li class="list-group-item d-flex justify-content-between">
+          <span>{{ log.date }}</span><span class="badge bg-primary">{{ log.visit_count }}</span>
+        </li>
+      {% empty %}<li class="list-group-item text-muted">No visits recorded yet.</li>{% endfor %}
+    </ul>
+  </div>
+  <div class="col-md-6 mb-4">
+    <h2 class="h5">Recent searches</h2>
+    {% if recent_searches %}
+      <div>
+        {% for kw in recent_searches %}
+          <a href="{% url 'resource_list' %}?q={{ kw|urlencode }}"
+             class="badge bg-light text-dark border me-1 mb-1 text-decoration-none">{{ kw }}</a>
+        {% endfor %}
+      </div>
+    {% else %}<p class="text-muted">No searches yet.</p>{% endif %}
+  </div>
+</div>
+
+<h2 class="h5">Recently viewed</h2>
+<ul class="list-group mb-4">
+  {% for r in recently_viewed %}
+    <li class="list-group-item"><a href="{% url 'resource_detail' r.pk %}">{{ r.title }}</a></li>
+  {% empty %}<li class="list-group-item text-muted">Nothing viewed yet.</li>{% endfor %}
+</ul>
+
+<h2 class="h5">Action log</h2>
+<ul class="list-group">
+  {% for h in history %}
+    <li class="list-group-item d-flex justify-content-between">
+      <span>{{ h.get_action_display }}{% if h.resource %}: {{ h.resource.title }}{% elif h.keyword %}: "{{ h.keyword }}"{% endif %}</span>
+      <span class="text-muted small">{{ h.created_at|date:"M d, H:i" }}</span>
+    </li>
+  {% empty %}<li class="list-group-item text-muted">No actions logged yet.</li>{% endfor %}
+</ul>
+{% endblock %}
