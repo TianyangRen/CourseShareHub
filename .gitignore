@@ -32,6 +32,3 @@ Thumbs.db
 
 # Secrets
 .env
-
-# Planning docs (AI-assisted blueprint; kept local, NOT committed to the graded repo)
-docs/
