@@ -1,5 +1,5 @@
 """
-Django admin registration for CourseShare Hub.
+Django admin registration for CourseShare Hub.  Owner: Tianyang (data backbone).
 
 A configured admin gives every model owner a fast way to create/inspect data
 during testing, and reads as polish during the demo. See docs/PROJECT_PLAN.md §5.2.

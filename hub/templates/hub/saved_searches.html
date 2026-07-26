@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}My Saved Searches · CourseShare Hub{% endblock %}
+{% block content %}
+<h1 class="h3 mb-4 section-title"><i data-lucide="bookmark"></i>My Saved Searches</h1>
+<div class="card"><div class="card-body">
+  <div class="d-grid gap-2">
+    {% for s in saved_searches %}
+      <div class="d-flex justify-content-between align-items-center">
+        <a class="meta text-decoration-none"
+           href="{% url 'resource_list' %}?q={{ s.keyword|urlencode }}{% if s.course %}&course={{ s.course.pk }}{% endif %}{% if s.category %}&category={{ s.category.pk }}{% endif %}{% if s.file_type %}&file_type={{ s.file_type }}{% endif %}">
+          <i data-lucide="search"></i>
+          {% if s.keyword %}"{{ s.keyword }}"{% else %}(all resources){% endif %}
+          {% if s.course %}· {{ s.course.code }}{% endif %}{% if s.category %}· {{ s.category.name }}{% endif %}{% if s.file_type %}· {{ s.file_type }}{% endif %}
+        </a>
+        <form method="post" action="{% url 'delete_saved_search' s.pk %}">
+          {% csrf_token %}
+          <button class="btn btn-outline-danger btn-sm" aria-label="Delete"><i data-lucide="trash-2"></i></button>
+        </form>
+      </div>
+    {% empty %}
+      <div class="text-center py-4">
+        <div class="icon-box mx-auto mb-2"><i data-lucide="bookmark"></i></div>
+        <p class="text-muted mb-0">No saved searches yet. Run a search on the
+          <a href="{% url 'resource_list' %}">Browse</a> page and click "Save this search".</p>
+      </div>
+    {% endfor %}
+  </div>
+</div></div>
+{% endblock %}

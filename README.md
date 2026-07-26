@@ -26,8 +26,8 @@ pip install -r requirements.txt
 # 3. Apply migrations
 python manage.py migrate
 
-# 4. (later) load sample data from JSON fixtures
-# python manage.py loaddata categories courses resources
+# 4. Load the sample data (categories, courses, tags, users, resources)
+python manage.py loaddata sample_data
 
 # 5. Create an admin account
 python manage.py createsuperuser
@@ -37,6 +37,9 @@ python manage.py runserver
 ```
 
 Then open http://127.0.0.1:8000/ (admin at `/admin/`).
+
+> **Sample logins** (after `loaddata sample_data`): `hzhang`, `tren`, or `ljiang`
+> — password `CourseHub2026`.
 
 > **Forgot-password** uses the console email backend — the reset link is printed
 > in the terminal running `runserver` (no external email service needed).

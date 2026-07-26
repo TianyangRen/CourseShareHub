@@ -65,8 +65,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                # TODO(Kun): visit/history counter (cookie-based). Currently a
-                # safe no-op returning {}. See docs/PROJECT_PLAN.md §5.4.
+                # Injects visit_stats (today's/total visits) into every template;
+                # numbers come from hub.middleware.VisitCountMiddleware (§5.4, Kun).
                 'hub.context_processors.visit_counter',
             ],
         },

@@ -1,0 +1,411 @@
+[
+{
+  "model": "auth.user",
+  "pk": 11,
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$MPtVOpeqGzQ8VnwrCx4HQK$6R46iAPjnxeTnah/DKEcGVvBevu2vIuHlBKtExuuAWQ=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "hzhang",
+    "first_name": "Honghao",
+    "last_name": "Zhang",
+    "email": "honghao@example.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-07-22T17:00:52.707Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "pk": 12,
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$YjJxiAx4JPOw2eTRX4yAZC$pz0C1yXqv1DbRtLR3x3QThetO0MWbWt5WF8yVmvluZM=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "tren",
+    "first_name": "Tianyang",
+    "last_name": "Ren",
+    "email": "tianyang@example.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-07-22T17:00:53.777Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "pk": 13,
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$P1VcsQekrF8UYn9670hlpz$DV2uZS0247pLYu1Qyzu+XO5OCXvXScNREyQhpYAHP/g=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "ljiang",
+    "first_name": "Lei",
+    "last_name": "Jiang",
+    "email": "lei@example.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-07-22T17:00:54.835Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "hub.category",
+  "pk": 7,
+  "fields": {
+    "name": "Lecture Notes",
+    "slug": "lecture-notes",
+    "description": "",
+    "icon": ""
+  }
+},
+{
+  "model": "hub.category",
+  "pk": 8,
+  "fields": {
+    "name": "Lab Files",
+    "slug": "lab-files",
+    "description": "",
+    "icon": ""
+  }
+},
+{
+  "model": "hub.category",
+  "pk": 9,
+  "fields": {
+    "name": "Slides",
+    "slug": "slides",
+    "description": "",
+    "icon": ""
+  }
+},
+{
+  "model": "hub.category",
+  "pk": 10,
+  "fields": {
+    "name": "Past Exams",
+    "slug": "past-exams",
+    "description": "",
+    "icon": ""
+  }
+},
+{
+  "model": "hub.category",
+  "pk": 11,
+  "fields": {
+    "name": "Cheat Sheets",
+    "slug": "cheat-sheets",
+    "description": "",
+    "icon": ""
+  }
+},
+{
+  "model": "hub.course",
+  "pk": 4,
+  "fields": {
+    "code": "COMP-8347",
+    "title": "Internet Applications and Distributed Systems",
+    "description": "",
+    "term": "Summer 2026",
+    "created_at": "2026-07-22T17:00:52.668Z"
+  }
+},
+{
+  "model": "hub.course",
+  "pk": 5,
+  "fields": {
+    "code": "COMP-8570",
+    "title": "Advanced Software Engineering",
+    "description": "",
+    "term": "Summer 2026",
+    "created_at": "2026-07-22T17:00:52.672Z"
+  }
+},
+{
+  "model": "hub.course",
+  "pk": 6,
+  "fields": {
+    "code": "STAT-8300",
+    "title": "Applied Statistics",
+    "description": "",
+    "term": "Summer 2026",
+    "created_at": "2026-07-22T17:00:52.676Z"
+  }
+},
+{
+  "model": "hub.tag",
+  "pk": 1,
+  "fields": {
+    "name": "django",
+    "slug": "django"
+  }
+},
+{
+  "model": "hub.tag",
+  "pk": 2,
+  "fields": {
+    "name": "python",
+    "slug": "python"
+  }
+},
+{
+  "model": "hub.tag",
+  "pk": 3,
+  "fields": {
+    "name": "tcp",
+    "slug": "tcp"
+  }
+},
+{
+  "model": "hub.tag",
+  "pk": 4,
+  "fields": {
+    "name": "sockets",
+    "slug": "sockets"
+  }
+},
+{
+  "model": "hub.tag",
+  "pk": 5,
+  "fields": {
+    "name": "orm",
+    "slug": "orm"
+  }
+},
+{
+  "model": "hub.tag",
+  "pk": 6,
+  "fields": {
+    "name": "exam-prep",
+    "slug": "exam-prep"
+  }
+},
+{
+  "model": "hub.userprofile",
+  "pk": 11,
+  "fields": {
+    "user": 11,
+    "avatar": "",
+    "student_id": "",
+    "program": "",
+    "bio": "",
+    "created_at": "2026-07-22T17:00:53.763Z"
+  }
+},
+{
+  "model": "hub.userprofile",
+  "pk": 12,
+  "fields": {
+    "user": 12,
+    "avatar": "",
+    "student_id": "",
+    "program": "",
+    "bio": "",
+    "created_at": "2026-07-22T17:00:54.830Z"
+  }
+},
+{
+  "model": "hub.userprofile",
+  "pk": 13,
+  "fields": {
+    "user": 13,
+    "avatar": "",
+    "student_id": "",
+    "program": "",
+    "bio": "",
+    "created_at": "2026-07-22T17:00:55.888Z"
+  }
+},
+{
+  "model": "hub.resource",
+  "pk": 9,
+  "fields": {
+    "title": "Week 6 – Models & Migrations Notes",
+    "description": "Notes covering Django models, fields, relationships, and migrations.",
+    "uploader": 12,
+    "course": 4,
+    "category": 7,
+    "file": "resources/samples/week-6-models-migrations-notes.pdf",
+    "file_type": "PDF",
+    "is_public": true,
+    "views_count": 0,
+    "download_count": 0,
+    "created_at": "2026-07-22T17:00:56.335Z",
+    "updated_at": "2026-07-22T17:00:56.335Z",
+    "tags": [
+      1,
+      5
+    ]
+  }
+},
+{
+  "model": "hub.resource",
+  "pk": 10,
+  "fields": {
+    "title": "Lab 3 – TCP Socket Programming",
+    "description": "Starter code and instructions for the TCP socket programming lab.",
+    "uploader": 13,
+    "course": 4,
+    "category": 8,
+    "file": "resources/samples/lab-3-tcp-socket-programming.pdf",
+    "file_type": "PDF",
+    "is_public": true,
+    "views_count": 0,
+    "download_count": 0,
+    "created_at": "2026-07-22T17:00:56.353Z",
+    "updated_at": "2026-07-22T17:00:56.353Z",
+    "tags": [
+      2,
+      4,
+      3
+    ]
+  }
+},
+{
+  "model": "hub.resource",
+  "pk": 11,
+  "fields": {
+    "title": "Lecture 5 Slides – Class-Based Views",
+    "description": "Slides introducing ListView, DetailView and the generic editing views.",
+    "uploader": 11,
+    "course": 4,
+    "category": 9,
+    "file": "resources/samples/lecture-5-slides-class-based-views.pdf",
+    "file_type": "PDF",
+    "is_public": true,
+    "views_count": 0,
+    "download_count": 0,
+    "created_at": "2026-07-22T17:00:56.370Z",
+    "updated_at": "2026-07-22T17:00:56.370Z",
+    "tags": [
+      1
+    ]
+  }
+},
+{
+  "model": "hub.resource",
+  "pk": 12,
+  "fields": {
+    "title": "Midterm 2023 (with solutions)",
+    "description": "Previous midterm paper with a full worked solution key.",
+    "uploader": 12,
+    "course": 4,
+    "category": 10,
+    "file": "resources/samples/midterm-2023-with-solutions.pdf",
+    "file_type": "PDF",
+    "is_public": true,
+    "views_count": 0,
+    "download_count": 0,
+    "created_at": "2026-07-22T17:00:56.385Z",
+    "updated_at": "2026-07-22T17:00:56.385Z",
+    "tags": [
+      6
+    ]
+  }
+},
+{
+  "model": "hub.resource",
+  "pk": 13,
+  "fields": {
+    "title": "Django ORM Cheat Sheet",
+    "description": "A one-page reference for common QuerySet operations and lookups.",
+    "uploader": 13,
+    "course": 4,
+    "category": 11,
+    "file": "resources/samples/django-orm-cheat-sheet.pdf",
+    "file_type": "PDF",
+    "is_public": true,
+    "views_count": 0,
+    "download_count": 0,
+    "created_at": "2026-07-22T17:00:56.399Z",
+    "updated_at": "2026-07-22T17:00:56.399Z",
+    "tags": [
+      1,
+      5
+    ]
+  }
+},
+{
+  "model": "hub.resource",
+  "pk": 14,
+  "fields": {
+    "title": "Design Patterns – Summary Notes",
+    "description": "Condensed notes on the most common software design patterns.",
+    "uploader": 11,
+    "course": 5,
+    "category": 7,
+    "file": "resources/samples/design-patterns-summary-notes.pdf",
+    "file_type": "PDF",
+    "is_public": true,
+    "views_count": 0,
+    "download_count": 0,
+    "created_at": "2026-07-22T17:00:56.414Z",
+    "updated_at": "2026-07-22T17:00:56.414Z",
+    "tags": []
+  }
+},
+{
+  "model": "hub.resource",
+  "pk": 15,
+  "fields": {
+    "title": "Applied Statistics Formula Sheet",
+    "description": "Key distributions, tests, and formulas for the applied statistics final.",
+    "uploader": 12,
+    "course": 6,
+    "category": 11,
+    "file": "resources/samples/applied-statistics-formula-sheet.pdf",
+    "file_type": "PDF",
+    "is_public": true,
+    "views_count": 0,
+    "download_count": 0,
+    "created_at": "2026-07-22T17:00:56.423Z",
+    "updated_at": "2026-07-22T17:00:56.423Z",
+    "tags": [
+      6
+    ]
+  }
+},
+{
+  "model": "hub.resource",
+  "pk": 16,
+  "fields": {
+    "title": "Draft – unfinished notes",
+    "description": "A private draft that only registered members (not guests) can see.",
+    "uploader": 13,
+    "course": 4,
+    "category": 7,
+    "file": "resources/samples/draft-unfinished-notes.pdf",
+    "file_type": "PDF",
+    "is_public": false,
+    "views_count": 0,
+    "download_count": 0,
+    "created_at": "2026-07-22T17:00:56.439Z",
+    "updated_at": "2026-07-22T17:00:56.439Z",
+    "tags": []
+  }
+},
+{
+  "model": "hub.comment",
+  "pk": 2,
+  "fields": {
+    "resource": 9,
+    "author": 13,
+    "body": "Super clear notes — the migrations part really helped!",
+    "created_at": "2026-07-22T17:00:56.443Z"
+  }
+},
+{
+  "model": "hub.comment",
+  "pk": 3,
+  "fields": {
+    "resource": 10,
+    "author": 11,
+    "body": "The socket example cleared up a lot for me, thanks.",
+    "created_at": "2026-07-22T17:00:56.448Z"
+  }
+}
+]

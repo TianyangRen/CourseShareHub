@@ -11,28 +11,37 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy
-from django.db.models import Q, F
+from django.db.models import Q, F, Count
 from django.views.generic import (
     TemplateView, CreateView, UpdateView, DeleteView, ListView, DetailView,
 )
 
 from .forms import (
     RegisterForm, UserProfileForm, ContactForm, SearchFilterForm, ResourceForm, CommentForm,
+    CategoryForm, CourseForm, SavedSearchForm,
 )
-from .models import UserProfile, Resource, UserHistory, Favourite
+from .models import UserProfile, Resource, UserHistory, Favourite, Category, Course, SavedSearch
 
 
 class HomeView(TemplateView):
-    """Public landing page (guests + registered).  OWNER: Zhihan — §3.
-
-    TODO(Zhihan): pass featured categories + recent public resources into the
-    context (override get_context_data) once the browse slice is styled.
-    """
+    """Public landing page (guests + registered).  OWNER: Zhihan — §3."""
     template_name = 'hub/home.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['categories'] = (Category.objects
+                             .annotate(n=Count('resources'))
+                             .order_by('-n', 'name')[:6])
+        ctx['recent'] = (Resource.objects.filter(is_public=True)
+                         .select_related('category', 'course', 'uploader')
+                         .order_by('-created_at')[:6])
+        ctx['total_resources'] = Resource.objects.filter(is_public=True).count()
+        ctx['total_courses'] = Course.objects.count()
+        return ctx
 
 
 # ============================================================================
-#  Honghao — Authentication / Profile / Contact  (§5.1)
+#  Honghao — Authentication / Profile  (§5.1)  (Contact moved to Kun)
 #  login / logout / password-reset are Django's built-in views, wired in the
 #  project urls.py.  The views below are the custom parts.
 # ============================================================================
@@ -81,17 +90,6 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         messages.success(self.request, 'Your profile has been updated.')
-        return super().form_valid(form)
-
-
-class ContactView(CreateView):
-    """Contact Us — saves a ContactMessage and thanks the visitor."""
-    form_class = ContactForm
-    template_name = 'hub/contact.html'
-    success_url = reverse_lazy('home')
-
-    def form_valid(self, form):
-        messages.success(self.request, 'Thanks! Your message has been sent.')
         return super().form_valid(form)
 
 
@@ -194,6 +192,37 @@ class ResourceDetailView(DetailView):
         return ctx
 
 
+@login_required
+def save_search(request):
+    """Save the current search + filter combination for the user.  Owner: Lei."""
+    if request.method == 'POST':
+        form = SavedSearchForm(request.POST)
+        if form.is_valid():
+            saved = form.save(commit=False)
+            saved.user = request.user
+            saved.save()
+            messages.success(request, 'Search saved.')
+    return redirect('saved_searches')
+
+
+class SavedSearchListView(LoginRequiredMixin, ListView):
+    """The current user's saved searches.  Owner: Lei."""
+    template_name = 'hub/saved_searches.html'
+    context_object_name = 'saved_searches'
+
+    def get_queryset(self):
+        return self.request.user.saved_searches.select_related('course', 'category')
+
+
+@login_required
+def delete_saved_search(request, pk):
+    """Remove one saved search.  Owner: Lei."""
+    if request.method == 'POST':
+        request.user.saved_searches.filter(pk=pk).delete()
+        messages.info(request, 'Saved search removed.')
+    return redirect('saved_searches')
+
+
 # ============================================================================
 #  Tianyang — Resource CRUD  (§5.2)
 # ============================================================================
@@ -254,6 +283,47 @@ def resource_download(request, pk):
     return redirect(resource.file.url)
 
 
+# ---- Tianyang — Course / Category browse + management (§5.2) ---------------
+class CategoryListView(ListView):
+    """Directory of all categories with resource counts."""
+    template_name = 'hub/category_list.html'
+    context_object_name = 'categories'
+
+    def get_queryset(self):
+        return Category.objects.annotate(n=Count('resources')).order_by('name')
+
+
+class CourseListView(ListView):
+    """Directory of all courses with resource counts."""
+    template_name = 'hub/course_list.html'
+    context_object_name = 'courses'
+
+    def get_queryset(self):
+        return Course.objects.annotate(n=Count('resources')).order_by('code')
+
+
+class CategoryCreateView(LoginRequiredMixin, CreateView):
+    form_class = CategoryForm
+    template_name = 'hub/taxonomy_form.html'
+    success_url = reverse_lazy('category_list')
+    extra_context = {'kind': 'category'}
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Category added.')
+        return super().form_valid(form)
+
+
+class CourseCreateView(LoginRequiredMixin, CreateView):
+    form_class = CourseForm
+    template_name = 'hub/taxonomy_form.html'
+    success_url = reverse_lazy('course_list')
+    extra_context = {'kind': 'course'}
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Course added.')
+        return super().form_valid(form)
+
+
 # ============================================================================
 #  Kun — Sessions / Cookies / History  (§5.4)
 # ============================================================================
@@ -285,6 +355,17 @@ def clear_history(request):
         request.session.pop('recent_searches', None)
         messages.info(request, 'Your browsing history has been cleared.')
     return redirect('history')
+
+
+class ContactView(CreateView):
+    """Contact Us — saves a ContactMessage and thanks the visitor.  Owner: Kun."""
+    form_class = ContactForm
+    template_name = 'hub/contact.html'
+    success_url = reverse_lazy('home')
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Thanks! Your message has been sent.')
+        return super().form_valid(form)
 
 
 # ============================================================================
@@ -332,10 +413,12 @@ class FavouritesListView(LoginRequiredMixin, ListView):
 
 
 class AboutView(TemplateView):
+    """About page.  Owner: Tianyang (moved for balance)."""
     template_name = 'hub/about.html'
 
 
 class TeamView(TemplateView):
+    """Team page.  Owner: Honghao (moved for balance)."""
     template_name = 'hub/team.html'
 
     def get_context_data(self, **kwargs):

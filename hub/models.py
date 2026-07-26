@@ -161,7 +161,7 @@ class SavedSearch(models.Model):
 
 
 # ============================================================================
-#  Honghao — UserProfile, ContactMessage  (§5.1 Auth / Profile)
+#  Honghao — UserProfile  (§5.1 Auth / Profile)
 # ============================================================================
 class UserProfile(models.Model):
     """Extra per-user data attached one-to-one to the built-in User."""
@@ -176,24 +176,8 @@ class UserProfile(models.Model):
         return f"{self.user.username}'s profile"
 
 
-class ContactMessage(models.Model):
-    """A message submitted through the Contact Us form."""
-    name = models.CharField(max_length=100)
-    email = models.EmailField()
-    subject = models.CharField(max_length=200)
-    body = models.TextField()
-    is_read = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['-created_at']
-
-    def __str__(self):
-        return f"{self.subject} ({self.email})"
-
-
 # ============================================================================
-#  Kun — UserHistory, DailyVisitLog  (§5.4 Sessions / Cookies / History)
+#  Kun — UserHistory, DailyVisitLog, ContactMessage  (§5.4 + Contact §5.5)
 # ============================================================================
 class UserHistory(models.Model):
     """A persistent record of a member's actions (for the History page)."""
@@ -240,6 +224,22 @@ class DailyVisitLog(models.Model):
     def __str__(self):
         who = self.user or f"guest:{self.session_key}"
         return f"{who} — {self.date}: {self.visit_count}"
+
+
+class ContactMessage(models.Model):
+    """A message submitted through the Contact Us form.  Owner: Kun."""
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    subject = models.CharField(max_length=200)
+    body = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.subject} ({self.email})"
 
 
 # ============================================================================

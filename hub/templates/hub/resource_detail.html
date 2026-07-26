@@ -6,61 +6,85 @@
   <li class="breadcrumb-item active" aria-current="page">{{ resource.title|truncatewords:6 }}</li>
 </ol></nav>
 
-<div class="row">
+<div class="row g-4">
   <div class="col-lg-8">
-    <div class="d-flex gap-2 mb-2">
-      <span class="badge bg-primary">{{ resource.category.name }}</span>
-      <span class="badge bg-secondary">{{ resource.get_file_type_display }}</span>
-      {% if not resource.is_public %}<span class="badge bg-warning text-dark">Members only</span>{% endif %}
-    </div>
-    <h1 class="h3">{{ resource.title }}</h1>
-    <p class="text-muted">
-      {% if resource.course %}{{ resource.course.code }} – {{ resource.course.title }} · {% endif %}
-      Uploaded by {{ resource.uploader.username }} on {{ resource.created_at|date:"M d, Y" }}
-    </p>
-    <p>{{ resource.description|linebreaks }}</p>
-
-    {% if resource.tags.all %}
-      <div class="mb-3">
-        {% for t in resource.tags.all %}<span class="badge bg-light text-dark border me-1">#{{ t.name }}</span>{% endfor %}
+    <div class="card"><div class="card-body p-4">
+      <div class="d-flex gap-2 mb-3 flex-wrap">
+        <span class="chip chip-brand"><i data-lucide="folder"></i>{{ resource.category.name }}</span>
+        <span class="chip chip-slate"><i data-lucide="file"></i>{{ resource.get_file_type_display }}</span>
+        {% if not resource.is_public %}<span class="chip chip-amber"><i data-lucide="lock"></i>Members only</span>{% endif %}
       </div>
-    {% endif %}
-
-    <a href="{% url 'resource_download' resource.pk %}" class="btn btn-success">&#8681; Download</a>
-    <span class="text-muted ms-2 small">&#128065; {{ resource.views_count }} views · &#8681; {{ resource.download_count }} downloads</span>
-    {% if user == resource.uploader %}
-      <div class="mt-3">
-        <a href="{% url 'resource_update' resource.pk %}" class="btn btn-outline-primary btn-sm">Edit</a>
-        <a href="{% url 'resource_delete' resource.pk %}" class="btn btn-outline-danger btn-sm">Delete</a>
+      <h1 class="h3">{{ resource.title }}</h1>
+      <div class="d-flex flex-wrap gap-3 mb-3">
+        {% if resource.course %}<span class="meta"><i data-lucide="book"></i>{{ resource.course.code }} – {{ resource.course.title }}</span>{% endif %}
+        <span class="meta"><i data-lucide="user"></i>{{ resource.uploader.username }}</span>
+        <span class="meta"><i data-lucide="calendar"></i>{{ resource.created_at|date:"M d, Y" }}</span>
       </div>
-    {% endif %}
+      <p>{{ resource.description|linebreaks }}</p>
 
-    <hr class="my-4">
-    <h2 class="h5">Comments ({{ resource.comments.count }})</h2>
-    {# TODO(Zhihan §6): comment form + favourite button get wired in here. #}
-    <ul class="list-group">
-      {% for comment in resource.comments.all %}
-        <li class="list-group-item">
-          <strong>{{ comment.author.username }}</strong>
-          <span class="text-muted small">· {{ comment.created_at|date:"M d, Y H:i" }}</span>
-          <div>{{ comment.body|linebreaksbr }}</div>
-        </li>
-      {% empty %}
-        <li class="list-group-item text-muted">No comments yet.</li>
-      {% endfor %}
-    </ul>
+      {% if resource.tags.all %}
+        <div class="mb-3 d-flex flex-wrap gap-1">
+          {% for t in resource.tags.all %}<span class="chip chip-slate"><i data-lucide="tag"></i>{{ t.name }}</span>{% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <a href="{% url 'resource_download' resource.pk %}" class="btn btn-success"><i data-lucide="download"></i>Download</a>
+        {% if user.is_authenticated %}
+          <form method="post" action="{% url 'toggle_favourite' resource.pk %}">
+            {% csrf_token %}
+            <button class="btn {% if is_favourited %}btn-warning{% else %}btn-outline-primary{% endif %}" type="submit">
+              <i data-lucide="heart"></i>{% if is_favourited %}Favourited{% else %}Favourite{% endif %}
+            </button>
+          </form>
+        {% endif %}
+        {% if user == resource.uploader %}
+          <a href="{% url 'resource_update' resource.pk %}" class="btn btn-outline-primary"><i data-lucide="square-pen"></i>Edit</a>
+          <a href="{% url 'resource_delete' resource.pk %}" class="btn btn-outline-danger"><i data-lucide="trash-2"></i>Delete</a>
+        {% endif %}
+      </div>
+    </div></div>
+
+    <div class="card mt-4"><div class="card-body p-4">
+      <h2 class="h5 section-title mb-3"><i data-lucide="message-square"></i>Comments ({{ resource.comments.count }})</h2>
+      {% if user.is_authenticated %}
+        <form method="post" action="{% url 'add_comment' resource.pk %}" class="mb-4">
+          {% csrf_token %}
+          {% include 'partials/_form.html' with form=comment_form %}
+          <button class="btn btn-primary btn-sm" type="submit"><i data-lucide="send"></i>Post comment</button>
+        </form>
+      {% else %}
+        <p class="text-muted"><a href="{% url 'login' %}">Log in</a> to comment.</p>
+      {% endif %}
+      <div class="d-grid gap-3">
+        {% for comment in resource.comments.all %}
+          <div class="d-flex gap-3">
+            <span class="avatar-mini mt-1">{{ comment.author.username.0|upper }}</span>
+            <div>
+              <div><strong>{{ comment.author.username }}</strong>
+                <span class="text-muted small">· {{ comment.created_at|date:"M d, Y H:i" }}</span></div>
+              <div>{{ comment.body|linebreaksbr }}</div>
+            </div>
+          </div>
+        {% empty %}
+          <p class="text-muted mb-0">No comments yet.</p>
+        {% endfor %}
+      </div>
+    </div></div>
   </div>
 
   <div class="col-lg-4">
-    <div class="card shadow-sm"><div class="card-body">
-      <h2 class="h6">Details</h2>
-      <ul class="list-unstyled small mb-0">
-        <li><strong>Uploader:</strong> {{ resource.uploader.username }}</li>
-        <li><strong>Category:</strong> {{ resource.category.name }}</li>
-        {% if resource.course %}<li><strong>Course:</strong> {{ resource.course.code }}</li>{% endif %}
-        <li><strong>Type:</strong> {{ resource.get_file_type_display }}</li>
-        <li><strong>Added:</strong> {{ resource.created_at|date:"M d, Y" }}</li>
-      </ul>
+    <div class="card"><div class="card-body p-4">
+      <h2 class="h6 section-title mb-3"><i data-lucide="info"></i>Details</h2>
+      <div class="d-grid gap-2 small">
+        <span class="meta"><i data-lucide="user"></i>Uploader: {{ resource.uploader.username }}</span>
+        <span class="meta"><i data-lucide="folder"></i>Category: {{ resource.category.name }}</span>
+        {% if resource.course %}<span class="meta"><i data-lucide="book"></i>Course: {{ resource.course.code }}</span>{% endif %}
+        <span class="meta"><i data-lucide="file"></i>Type: {{ resource.get_file_type_display }}</span>
+        <span class="meta"><i data-lucide="eye"></i>{{ resource.views_count }} views</span>
+        <span class="meta"><i data-lucide="download"></i>{{ resource.download_count }} downloads</span>
+        <span class="meta"><i data-lucide="heart"></i>{{ resource.favourited_by.count }} favourites</span>
+      </div>
     </div></div>
   </div>
 </div>

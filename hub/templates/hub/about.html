@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}About · CourseShare Hub{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-8">
+  <div class="text-center mb-4">
+    <span class="icon-box lg mx-auto mb-3"><i data-lucide="library"></i></span>
+    <h1 class="h3">About CourseShare Hub</h1>
+  </div>
+  <p class="lead">CourseShare Hub is a centralised, searchable platform where students
+     upload, organise, and revisit course materials together.</p>
+  <p>Course files usually live scattered across email, group chats, Brightspace, personal
+     folders, and cloud drives. CourseShare Hub brings them into one student-friendly place:
+     browse and search public resources as a guest, or register to upload, comment, and save
+     favourites.</p>
+
+  <div class="card my-4"><div class="card-body">
+    <h2 class="h6 section-title mb-3"><i data-lucide="wrench"></i>Built with</h2>
+    <div class="d-grid gap-2">
+      <span class="meta"><i data-lucide="server"></i>Django — models, class-based views, forms, auth, sessions &amp; cookies</span>
+      <span class="meta"><i data-lucide="palette"></i>Bootstrap 5 + Lucide icons for the interface</span>
+      <span class="meta"><i data-lucide="database"></i>SQLite with JSON fixtures for initial data</span>
+    </div>
+  </div></div>
+
+  <p class="text-muted">Made for COMP-8347 — Internet Applications and Distributed Systems.</p>
+  <a class="btn btn-primary" href="{% url 'team' %}"><i data-lucide="users"></i>Meet the team</a>
+</div></div>
+{% endblock %}

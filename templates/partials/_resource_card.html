@@ -1,0 +1,22 @@
+{% comment %} Reusable resource card. Expects `resource` in context; wrap in a grid column loop. {% endcomment %}
+<div class="col">
+  <a href="{% url 'resource_detail' resource.pk %}" class="text-decoration-none">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between gap-2 mb-3">
+          <span class="icon-box">
+            <i data-lucide="{% if resource.file_type == 'PPT' %}presentation{% elif resource.file_type == 'IMG' %}image{% elif resource.file_type == 'OTHER' %}file{% else %}file-text{% endif %}"></i>
+          </span>
+          <span class="chip chip-brand">{{ resource.category.name }}</span>
+        </div>
+        <h3 class="h6 mb-1" style="color:var(--ink)">{{ resource.title }}</h3>
+        <p class="small text-muted mb-3">{{ resource.description|truncatewords:14 }}</p>
+        <div class="d-flex flex-wrap gap-3">
+          <span class="meta"><i data-lucide="book"></i>{% if resource.course %}{{ resource.course.code }}{% else %}General{% endif %}</span>
+          <span class="meta"><i data-lucide="eye"></i>{{ resource.views_count }}</span>
+          <span class="meta"><i data-lucide="user"></i>{{ resource.uploader.username }}</span>
+        </div>
+      </div>
+    </div>
+  </a>
+</div>

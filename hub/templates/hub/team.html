@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Team · CourseShare Hub{% endblock %}
+{% block content %}
+<h1 class="h3 mb-4 section-title"><i data-lucide="users"></i>Meet the Team</h1>
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+  {% for m in members %}
+    <div class="col"><div class="card h-100"><div class="card-body">
+      <div class="d-flex align-items-center gap-3 mb-2">
+        <span class="icon-box"><i data-lucide="user"></i></span>
+        <div>
+          <h2 class="h6 mb-0">{{ m.name }}</h2>
+          <div class="chip chip-brand mt-1">{{ m.role }}</div>
+        </div>
+      </div>
+      <p class="small text-muted mb-0">{{ m.detail }}</p>
+    </div></div></div>
+  {% endfor %}
+</div>
+{% endblock %}

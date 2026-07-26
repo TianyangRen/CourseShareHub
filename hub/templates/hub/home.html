@@ -1,22 +1,73 @@
 {% extends 'base.html' %}
-{% block title %}Home · CourseShare Hub{% endblock %}
-
+{% block title %}CourseShare Hub · Share course resources{% endblock %}
 {% block content %}
-<section class="text-center py-5">
-  <h1 class="display-5 fw-bold">Welcome to CourseShare Hub</h1>
-  <p class="lead text-muted">Upload, search, and revisit course materials — all in one place.</p>
 
-  {# Scaffold confirmation — delete once the real homepage exists. #}
-  <div class="alert alert-success d-inline-block mt-3">
-    ✅ Project scaffold is running. Replace this homepage — OWNER: Zhihan.
-  </div>
-
-  <div class="mt-4">
-    <a href="{% url 'resource_list' %}" class="btn btn-primary btn-lg">Browse Resources</a>
-    <a href="{% url 'resource_create' %}" class="btn btn-outline-secondary btn-lg">Upload</a>
+<section class="hero p-4 p-md-5 mb-5 text-center">
+  <span class="icon-box lg mb-3" style="background:rgba(255,255,255,.15);color:#fff"><i data-lucide="library"></i></span>
+  <h1 class="display-5 fw-bold">Find and share course resources</h1>
+  <p class="lead mb-4">Notes, labs, slides and past exams — organised, searchable, in one place.</p>
+  <form class="row justify-content-center g-2" action="{% url 'resource_list' %}" method="get">
+    <div class="col-md-6">
+      <div class="search-wrap">
+        <i data-lucide="search"></i>
+        <input class="form-control form-control-lg" type="search" name="q" placeholder="Search resources…">
+      </div>
+    </div>
+    <div class="col-auto"><button class="btn btn-warning btn-lg" type="submit"><i data-lucide="search"></i>Search</button></div>
+  </form>
+  <div class="mt-4 d-flex gap-2 justify-content-center flex-wrap">
+    <a href="{% url 'resource_list' %}" class="btn btn-light btn-lg"><i data-lucide="layout-grid"></i>Browse all</a>
+    {% if user.is_authenticated %}
+      <a href="{% url 'resource_create' %}" class="btn btn-outline-light btn-lg"><i data-lucide="upload"></i>Upload</a>
+    {% else %}
+      <a href="{% url 'register' %}" class="btn btn-outline-light btn-lg"><i data-lucide="user-plus"></i>Join now</a>
+    {% endif %}
   </div>
 </section>
 
-{% comment %} TODO(Zhihan): category cards row + recent-resources grid.
-   See PROJECT_PLAN §3 (HomeView) for the context to pass. {% endcomment %}
+<div class="row g-3 mb-5">
+  <div class="col-6">
+    <div class="stat p-4 text-center h-100">
+      <div class="icon-box mb-2"><i data-lucide="file-text"></i></div>
+      <div class="num">{{ total_resources }}</div><div class="lbl">Public resources</div>
+    </div>
+  </div>
+  <div class="col-6">
+    <div class="stat p-4 text-center h-100">
+      <div class="icon-box mb-2"><i data-lucide="book"></i></div>
+      <div class="num">{{ total_courses }}</div><div class="lbl">Courses</div>
+    </div>
+  </div>
+</div>
+
+<h2 class="h4 mb-3 section-title"><i data-lucide="folder-open"></i>Browse by category</h2>
+<div class="row row-cols-2 row-cols-md-3 row-cols-lg-6 g-3 mb-5">
+  {% for c in categories %}
+    <div class="col">
+      <a href="{% url 'resource_list' %}?category={{ c.pk }}" class="text-decoration-none">
+        <div class="card h-100 text-center"><div class="card-body">
+          <div class="icon-box mx-auto mb-2"><i data-lucide="folder"></i></div>
+          <div class="fw-semibold" style="color:var(--ink)">{{ c.name }}</div>
+          <div class="text-muted small">{{ c.n }} item{{ c.n|pluralize }}</div>
+        </div></div>
+      </a>
+    </div>
+  {% empty %}
+    <div class="col-12 text-muted">No categories yet.</div>
+  {% endfor %}
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="h4 mb-0 section-title"><i data-lucide="sparkles"></i>Recent resources</h2>
+  <a href="{% url 'resource_list' %}" class="btn btn-sm btn-outline-primary">View all<i data-lucide="arrow-right"></i></a>
+</div>
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+  {% for resource in recent %}
+    {% include 'partials/_resource_card.html' %}
+  {% empty %}
+    <div class="col-12"><div class="alert alert-info d-flex align-items-center gap-2">
+      <i data-lucide="info"></i><div>No resources yet. <a href="{% url 'resource_create' %}">Upload the first one!</a></div>
+    </div></div>
+  {% endfor %}
+</div>
 {% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}My Favourites · CourseShare Hub{% endblock %}
+{% block content %}
+<h1 class="h3 mb-4 section-title"><i data-lucide="heart"></i>My Favourites</h1>
+<div class="card mb-4"><div class="card-body">
+  <div class="d-grid gap-2">
+    {% for f in favourites %}
+      <a href="{% url 'resource_detail' f.resource.pk %}" class="d-flex justify-content-between align-items-center text-decoration-none">
+        <span class="meta"><i data-lucide="file-text"></i>{{ f.resource.title }}</span>
+        <span class="chip chip-brand">{{ f.resource.category.name }}</span>
+      </a>
+    {% empty %}
+      <div class="text-center py-4">
+        <div class="icon-box mx-auto mb-2"><i data-lucide="heart"></i></div>
+        <p class="text-muted mb-0">You haven't favourited anything yet.
+          <a href="{% url 'resource_list' %}">Browse resources</a>.</p>
+      </div>
+    {% endfor %}
+  </div>
+</div></div>
+{% if is_paginated %}
+<nav><ul class="pagination justify-content-center">
+  {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>{% endif %}
+  <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} of {{ paginator.num_pages }}</span></li>
+  {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>{% endif %}
+</ul></nav>
+{% endif %}
+{% endblock %}

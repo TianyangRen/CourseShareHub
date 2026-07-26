@@ -11,7 +11,7 @@ from django.contrib.auth.forms import (
 )
 from django.contrib.auth.models import User
 
-from .models import UserProfile, ContactMessage, Resource, Comment, Course, Category
+from .models import UserProfile, ContactMessage, Resource, Comment, Course, Category, SavedSearch
 
 
 class BootstrapMixin:
@@ -32,7 +32,7 @@ class BootstrapMixin:
                 widget.attrs.setdefault('class', 'form-control')
 
 
-# ---- Honghao — Auth / Profile / Contact (§5.1) ----------------------------
+# ---- Honghao — Auth / Profile (§5.1) --------------------------------------
 class RegisterForm(BootstrapMixin, UserCreationForm):
     """Extends Django's UserCreationForm with a required, unique email."""
     email = forms.EmailField(required=True)
@@ -55,14 +55,7 @@ class UserProfileForm(BootstrapMixin, forms.ModelForm):
         widgets = {'bio': forms.Textarea(attrs={'rows': 3})}
 
 
-class ContactForm(BootstrapMixin, forms.ModelForm):
-    class Meta:
-        model = ContactMessage
-        fields = ['name', 'email', 'subject', 'body']
-        widgets = {'body': forms.Textarea(attrs={'rows': 5})}
-
-
-# ---- Tianyang — Resource upload / edit (§5.2) ------------------------------
+# ---- Tianyang — Resource + taxonomy (Course/Category) forms (§5.2) ---------
 class ResourceForm(BootstrapMixin, forms.ModelForm):
     """Upload / edit a resource. `uploader` and `file_type` are set server-side
     (in the view and the model's save()), so they are NOT in this form."""
@@ -70,6 +63,20 @@ class ResourceForm(BootstrapMixin, forms.ModelForm):
         model = Resource
         fields = ['title', 'description', 'course', 'category', 'tags', 'file', 'is_public']
         widgets = {'description': forms.Textarea(attrs={'rows': 4})}
+
+
+class CategoryForm(BootstrapMixin, forms.ModelForm):
+    class Meta:
+        model = Category
+        fields = ['name', 'description', 'icon']
+        widgets = {'description': forms.Textarea(attrs={'rows': 2})}
+
+
+class CourseForm(BootstrapMixin, forms.ModelForm):
+    class Meta:
+        model = Course
+        fields = ['code', 'title', 'description', 'term']
+        widgets = {'description': forms.Textarea(attrs={'rows': 2})}
 
 
 # ---- Zhihan — Comment (§5.5) ----------------------------------------------
@@ -80,7 +87,7 @@ class CommentForm(BootstrapMixin, forms.ModelForm):
         widgets = {'body': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Add a comment…'})}
 
 
-# ---- Lei — Search + dropdown filters (§5.3) --------------------------------
+# ---- Lei — Search filters + saved searches (§5.3) --------------------------
 class SearchFilterForm(BootstrapMixin, forms.Form):
     """Powers the search bar + the four dropdown filters on the list page.
     All fields are optional so an empty search simply lists everything."""
@@ -98,6 +105,22 @@ class SearchFilterForm(BootstrapMixin, forms.Form):
     category = forms.ModelChoiceField(queryset=Category.objects.all(), required=False, empty_label='All categories')
     file_type = forms.ChoiceField(required=False, choices=[('', 'All types')] + list(Resource.FileType.choices))
     sort = forms.ChoiceField(required=False, choices=SORT_CHOICES)
+
+
+class SavedSearchForm(BootstrapMixin, forms.ModelForm):
+    """Persists a search + filter combination for the logged-in user. Populated
+    from the current filter values (hidden inputs) when 'Save this search' is used."""
+    class Meta:
+        model = SavedSearch
+        fields = ['keyword', 'course', 'category', 'file_type']
+
+
+# ---- Kun — Contact (§5.5, moved here to balance the workload) --------------
+class ContactForm(BootstrapMixin, forms.ModelForm):
+    class Meta:
+        model = ContactMessage
+        fields = ['name', 'email', 'subject', 'body']
+        widgets = {'body': forms.Textarea(attrs={'rows': 5})}
 
 
 # ---- Bootstrap-styled versions of Django's built-in auth forms -------------

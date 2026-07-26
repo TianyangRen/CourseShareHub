@@ -24,6 +24,18 @@ urlpatterns = [
     path('resources/<int:pk>/edit/', views.ResourceUpdateView.as_view(), name='resource_update'),
     path('resources/<int:pk>/delete/', views.ResourceDeleteView.as_view(), name='resource_delete'),
     path('resources/<int:pk>/download/', views.resource_download, name='resource_download'),
+
+    # Course / Category browse + management (§5.2, Tianyang)
+    path('categories/', views.CategoryListView.as_view(), name='category_list'),
+    path('categories/new/', views.CategoryCreateView.as_view(), name='category_create'),
+    path('courses/', views.CourseListView.as_view(), name='course_list'),
+    path('courses/new/', views.CourseCreateView.as_view(), name='course_create'),
+
+    # Saved searches (§5.3, Lei)
+    path('saved-searches/', views.SavedSearchListView.as_view(), name='saved_searches'),
+    path('saved-searches/save/', views.save_search, name='save_search'),
+    path('saved-searches/<int:pk>/delete/', views.delete_saved_search, name='delete_saved_search'),
+
     # Sessions / cookies / history (§5.4)
     path('history/', views.HistoryView.as_view(), name='history'),
     path('history/clear/', views.clear_history, name='clear_history'),

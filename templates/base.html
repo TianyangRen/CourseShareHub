@@ -5,124 +5,135 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}CourseShare Hub{% endblock %}</title>
-
-  {% comment %} Bootstrap 5 via CDN. TODO(Zhihan): for an offline-safe live demo,
-     download these into static/ and switch to the static template tag. {% endcomment %}
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  {# Self-hosted so the live demo never depends on a CDN being reachable. #}
+  <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
   <link rel="stylesheet" href="{% static 'css/theme.css' %}">
   {% block extra_head %}{% endblock %}
 </head>
 <body class="d-flex flex-column min-vh-100">
 
-  {% comment %} NAVBAR — demonstrates the GUEST vs REGISTERED interface split
-     (PROJECT_PLAN §5.6): the is_authenticated branches below drive the nav. {% endcomment %}
-  <nav class="navbar navbar-expand-lg navbar-dark app-navbar">
+  {% comment %} NAVBAR — the is_authenticated branches drive the guest vs member UI (§5.6). {% endcomment %}
+  <nav class="navbar navbar-expand-lg app-navbar sticky-top">
     <div class="container">
-      <a class="navbar-brand fw-bold" href="{% url 'home' %}">📚 CourseShare Hub</a>
+      <a class="navbar-brand" href="{% url 'home' %}">
+        <span class="brand-mark"><i data-lucide="graduation-cap"></i></span>
+        CourseShare Hub
+      </a>
 
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-              data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false"
-              aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
+              data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+        <i data-lucide="menu"></i>
       </button>
 
       <div class="collapse navbar-collapse" id="mainNav">
-        {# Global search bar — submits to the browse page's ?q= filter (§5.3). #}
-        <form class="d-flex mx-lg-auto my-2 my-lg-0" role="search" action="{% url 'resource_list' %}" method="get">
-          <input class="form-control me-2" type="search" name="q" placeholder="Search resources…" aria-label="Search">
-          <button class="btn btn-warning" type="submit">Search</button>
+        <form class="search-wrap mx-lg-auto my-2 my-lg-0" style="max-width:440px;width:100%"
+              action="{% url 'resource_list' %}" method="get" role="search">
+          <i data-lucide="search"></i>
+          <input class="form-control" type="search" name="q" placeholder="Search resources…" aria-label="Search">
         </form>
 
-        <ul class="navbar-nav ms-auto align-items-lg-center">
-          <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Home</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'resource_list' %}">Browse</a></li>
+        <ul class="navbar-nav ms-auto align-items-lg-center gap-1">
+          <li class="nav-item"><a class="nav-link" href="{% url 'home' %}"><i data-lucide="home"></i>Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'resource_list' %}"><i data-lucide="layout-grid"></i>Browse</a></li>
 
           {% if user.is_authenticated %}
-            {# ---- REGISTERED-ONLY ---- #}
-            <li class="nav-item"><a class="nav-link" href="{% url 'resource_create' %}">Upload</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'resource_create' %}"><i data-lucide="upload"></i>Upload</a></li>
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" role="button"
-                 data-bs-toggle="dropdown" aria-expanded="false">{{ user.username }}</a>
+              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="avatar-mini">{{ user.username.0|upper }}</span> {{ user.username }}
+              </a>
               <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="{% url 'profile' %}">My Profile</a></li>
-                <li><a class="dropdown-item" href="{% url 'history' %}">My History</a></li>
+                <li><a class="dropdown-item" href="{% url 'profile' %}"><i data-lucide="user"></i>My Profile</a></li>
+                <li><a class="dropdown-item" href="{% url 'favourites' %}"><i data-lucide="heart"></i>My Favourites</a></li>
+                <li><a class="dropdown-item" href="{% url 'saved_searches' %}"><i data-lucide="bookmark"></i>Saved Searches</a></li>
+                <li><a class="dropdown-item" href="{% url 'history' %}"><i data-lucide="history"></i>My History</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li>
-                  {# Django 6 logout is POST-only — must be a form, not a link. #}
                   <form method="post" action="{% url 'logout' %}">
                     {% csrf_token %}
-                    <button type="submit" class="dropdown-item">Log out</button>
+                    <button type="submit" class="dropdown-item"><i data-lucide="log-out"></i>Log out</button>
                   </form>
                 </li>
               </ul>
             </li>
           {% else %}
-            {# ---- GUEST-ONLY ---- #}
-            <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
-            <li class="nav-item"><a class="btn btn-warning btn-sm ms-lg-2" href="{% url 'register' %}">Register</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'login' %}"><i data-lucide="log-in"></i>Login</a></li>
+            <li class="nav-item ms-lg-1">
+              <a class="btn btn-primary btn-sm" href="{% url 'register' %}"><i data-lucide="user-plus"></i>Sign up</a>
+            </li>
           {% endif %}
         </ul>
       </div>
     </div>
   </nav>
 
-  {# Flash messages (used across auth, uploads, favourites, etc.) #}
   {% if messages %}
     <div class="container mt-3">
       {% for m in messages %}
-        <div class="alert alert-{{ m.tags }} alert-dismissible fade show" role="alert">
-          {{ m }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="alert alert-{{ m.tags }} alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
+          <i data-lucide="info"></i><div>{{ m }}</div>
+          <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
       {% endfor %}
     </div>
   {% endif %}
 
-  {# =========================== PAGE CONTENT =========================== #}
   <main class="container flex-grow-1 py-4">
     {% block content %}{% endblock %}
   </main>
 
-  {% comment %} FOOTER — the rubric grades a complete footer aligned with the
-     theme (§6). {% endcomment %}
-  <footer class="app-footer mt-auto">
-    <div class="container py-4">
+  {% comment %} FOOTER — the rubric grades a complete footer aligned with the theme (§6). {% endcomment %}
+  <footer class="app-footer">
+    <div class="container py-5">
       <div class="row gy-4">
-        <div class="col-md-4">
-          <h5 class="fw-bold">📚 CourseShare Hub</h5>
-          <p class="small mb-0">A centralised, searchable platform to upload,
-            organise, and revisit course materials together.</p>
+        <div class="col-lg-4">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="brand-mark"><i data-lucide="graduation-cap"></i></span>
+            <span class="h5 mb-0 text-white">CourseShare Hub</span>
+          </div>
+          <p class="small mb-3">A centralised, searchable platform to upload, organise,
+             and revisit course materials together.</p>
+          <div class="footer-social d-flex gap-2">
+            <a href="#" aria-label="GitHub"><i data-lucide="github"></i></a>
+            <a href="#" aria-label="Twitter"><i data-lucide="twitter"></i></a>
+            <a href="#" aria-label="LinkedIn"><i data-lucide="linkedin"></i></a>
+          </div>
         </div>
-        <div class="col-6 col-md-2">
-          <h6 class="text-uppercase small fw-bold">Quick Links</h6>
-          <ul class="list-unstyled small">
+        <div class="col-6 col-lg-2">
+          <h6 class="text-uppercase small fw-bold mb-3">Explore</h6>
+          <ul class="list-unstyled small d-grid gap-2">
             <li><a href="{% url 'home' %}">Home</a></li>
             <li><a href="{% url 'resource_list' %}">Browse</a></li>
+            <li><a href="{% url 'category_list' %}">Categories</a></li>
+            <li><a href="{% url 'course_list' %}">Courses</a></li>
             <li><a href="{% url 'resource_create' %}">Upload</a></li>
           </ul>
         </div>
-        <div class="col-6 col-md-2">
-          <h6 class="text-uppercase small fw-bold">Company</h6>
-          <ul class="list-unstyled small">
-            <li><a href="#">About Us</a></li>{# TODO(Zhihan) #}
-            <li><a href="#">Team</a></li>{# TODO(Zhihan) #}
+        <div class="col-6 col-lg-2">
+          <h6 class="text-uppercase small fw-bold mb-3">Company</h6>
+          <ul class="list-unstyled small d-grid gap-2">
+            <li><a href="{% url 'about' %}">About Us</a></li>
+            <li><a href="{% url 'team' %}">Team</a></li>
             <li><a href="{% url 'contact' %}">Contact Us</a></li>
           </ul>
         </div>
-        <div class="col-md-4">
-          <h6 class="text-uppercase small fw-bold">Contact</h6>
-          <p class="small mb-1">School of Computer Science, University of Windsor</p>
-          <p class="small mb-0">COMP-8347 · Internet Applications &amp; Distributed Systems</p>
-          {# TODO(Zhihan): social icons (Bootstrap Icons) #}
+        <div class="col-lg-4">
+          <h6 class="text-uppercase small fw-bold mb-3">Contact</h6>
+          <p class="small mb-2 d-flex align-items-center gap-2"><i data-lucide="map-pin"></i>School of Computer Science, University of Windsor</p>
+          <p class="small mb-0 d-flex align-items-center gap-2"><i data-lucide="book-open"></i>COMP-8347 · Internet Applications &amp; Distributed Systems</p>
         </div>
       </div>
     </div>
-    <div class="footer-bottom text-center py-3 small">
-      © 2026 CourseShare Hub · COMP-8347 · Group Project{% if visit_stats %} · You've visited {{ visit_stats.daily }} time{{ visit_stats.daily|pluralize }} today{% endif %}
+    <div class="footer-bottom">
+      <div class="container py-3 text-center small">
+        © 2026 CourseShare Hub · COMP-8347 · Group Project{% if visit_stats %} · You've visited {{ visit_stats.daily }} time{{ visit_stats.daily|pluralize }} today{% endif %}
+      </div>
     </div>
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'js/lucide.min.js' %}"></script>
+  <script>lucide.createIcons();</script>
   {% block extra_js %}{% endblock %}
 </body>
 </html>
