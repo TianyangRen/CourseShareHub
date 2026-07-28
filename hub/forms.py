@@ -36,35 +36,58 @@ class BootstrapMixin:
 class RegisterForm(BootstrapMixin, UserCreationForm):
     """Extends Django's UserCreationForm with a required, unique email.
 
-    UserCreationForm already gives us username + the two password fields with
-    Django's password-strength validation and the "passwords must match" check,
-    so we only add `email`. Django's User.email is NOT unique by default, hence
-    the clean_email() check below enforces uniqueness ourselves.
+    Why subclass UserCreationForm instead of building a form from scratch: it
+    already ships the username field, the two password fields (password1 +
+    password2), the "the two passwords must match" check, and runs the passwords
+    through AUTH_PASSWORD_VALIDATORS (length / not-too-common / not-all-numeric /
+    not-similar-to-username). Reusing it means we inherit all of that for free and
+    only add what's missing — a mandatory, unique email.
+
+    Inheritance order matters: BootstrapMixin is listed FIRST so its __init__ runs
+    and adds the `form-control` CSS classes, then cooperatively calls up to
+    UserCreationForm via super() (see the mixin at the top of this file).
     """
+    # required=True → the field cannot be left blank (User.email is optional by
+    # default, so we tighten it here for our sign-up flow).
     email = forms.EmailField(required=True)
 
     class Meta(UserCreationForm.Meta):
-        # Inherit the parent Meta but pin the field order shown on the form.
+        # Subclass the parent Meta so we keep its settings, but override two things:
+        #   model  → the User model these fields map onto.
+        #   fields → also fixes the ORDER the fields render on the page.
         model = User
         fields = ['username', 'email', 'password1', 'password2']
 
     def clean_email(self):
-        # Field-level validation: Django calls clean_<fieldname> automatically.
-        # __iexact makes the duplicate check case-insensitive (A@x.com == a@x.com).
+        # Per-field validation hook: Django automatically calls clean_<fieldname>
+        # during is_valid(). We enforce email uniqueness ourselves because Django's
+        # default User model does NOT make email unique at the database level.
         email = self.cleaned_data['email']
+        # __iexact = case-insensitive exact match, so Bob@x.com and bob@x.com are
+        # treated as the same address and the second sign-up is rejected.
         if User.objects.filter(email__iexact=email).exists():
+            # Raising ValidationError here attaches the message to the email field
+            # and stops the form validating — the user sees it inline on the page.
             raise forms.ValidationError('An account with this email already exists.')
+        # Whatever clean_email returns becomes the field's final cleaned value.
         return email
 
 
 class UserProfileForm(BootstrapMixin, forms.ModelForm):
-    # ModelForm built straight from UserProfile: the four editable fields the user
-    # controls. `user` and `created_at` are deliberately excluded — they are set
-    # server-side (by the signal / the view), never chosen on the form.
+    """Edit form for the extra profile fields (used by ProfileUpdateView).
+
+    A ModelForm derives its fields straight from the model, so form.save() writes
+    the changes back to the UserProfile row for us. We expose only the four fields
+    the user should control; `user` and `created_at` are intentionally left out
+    because they are set server-side (the signal links the user, auto_now_add sets
+    the timestamp) and must not be user-editable.
+    """
     class Meta:
         model = UserProfile
         fields = ['avatar', 'student_id', 'program', 'bio']
-        widgets = {'bio': forms.Textarea(attrs={'rows': 3})}  # multi-line box for the bio
+        # Swap the default single-line input for a 3-row textarea on the bio so
+        # there's room to type a short paragraph.
+        widgets = {'bio': forms.Textarea(attrs={'rows': 3})}
 
 
 # ---- Tianyang — Resource + taxonomy (Course/Category) forms (§5.2) ---------
@@ -143,17 +166,22 @@ class ContactForm(BootstrapMixin, forms.ModelForm):
 
 
 # ---- Bootstrap-styled versions of Django's built-in auth forms -------------
-# The auth views (login / password reset / set new password) use Django's own
-# forms; subclassing with BootstrapMixin makes those pages match our theme.
-# We keep the parent's logic entirely — the mixin only injects CSS classes —
-# and wire each one into the matching auth view in coursesharehub/urls.py.
+# Django ships fully-working forms for login, password-reset and set-new-password,
+# but they render as plain, unstyled inputs. Rather than reimplement any of their
+# logic, we subclass each one together with BootstrapMixin: the `pass` body means
+# "behave exactly like the parent", while the mixin's __init__ adds our
+# `form-control` CSS classes so the pages match the rest of the site. Each class
+# is then plugged into the matching built-in auth view (via authentication_form=
+# / form_class=) in coursesharehub/urls.py — that wiring is the only reason these
+# subclasses need to exist.
 class BootstrapAuthenticationForm(BootstrapMixin, AuthenticationForm):
-    pass  # login page — username + password
+    pass  # login page — validates username + password against the auth backend
 
 
 class BootstrapPasswordResetForm(BootstrapMixin, PasswordResetForm):
-    pass  # "forgot password" page — enter email to receive a reset link
+    pass  # "forgot password" — takes an email and sends the reset link (step 1)
 
 
 class BootstrapSetPasswordForm(BootstrapMixin, SetPasswordForm):
-    pass  # "choose a new password" page reached from the emailed link
+    pass  # "choose a new password" reached from the emailed link (step 3),
+          # incl. the two-passwords-must-match + strength checks from the parent

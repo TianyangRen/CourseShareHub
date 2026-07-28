@@ -167,20 +167,40 @@ class SavedSearch(models.Model):
 class UserProfile(models.Model):
     """Extra per-user data attached one-to-one to the built-in User.
 
-    Why OneToOne instead of extending User: the assignment keeps Django's default
-    auth User (username/email/password) and hangs the app-specific fields off it.
-    related_name='profile' means we read them back with `request.user.profile`.
-    on_delete=CASCADE ties the profile's lifetime to the user — delete the user
-    and their profile row is removed with them (no orphan rows left behind).
+    Design decision — extend, don't replace: the assignment keeps Django's default
+    auth User (which already handles username / email / hashed password / login)
+    and hangs the app-specific fields off it through a OneToOneField. This is the
+    standard "profile" pattern and is less risky than swapping in a custom user
+    model, which would require rewiring auth from the start of the project.
+
+    Key field notes:
+      * OneToOneField → exactly one profile per user (a ForeignKey would allow
+        many, a plain field none). `related_name='profile'` is what lets templates
+        and views read the data back as `request.user.profile.bio`, etc.
+      * on_delete=models.CASCADE → the profile's lifetime is tied to its user:
+        delete the user and this row is deleted with them, so no orphan profiles
+        are ever left pointing at a user that no longer exists.
+      * Almost every field is blank=True → the profile is auto-created empty by
+        the post_save signal below, and the user fills it in later on the edit
+        form; nothing here is mandatory at sign-up time.
     """
+    # The link back to auth.User. USER is settings.AUTH_USER_MODEL (see top of file).
     user = models.OneToOneField(USER, on_delete=models.CASCADE, related_name='profile')
-    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)  # ImageField needs Pillow; files land in MEDIA_ROOT/avatars/
-    student_id = models.CharField(max_length=20, blank=True)  # blank=True → optional on the profile-edit form
-    program = models.CharField(max_length=100, blank=True)
-    bio = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)  # stamped once when the profile is first made
+    # ImageField needs the Pillow library installed; uploaded files are written to
+    # MEDIA_ROOT/avatars/. null=True lets the DB column be empty, blank=True lets
+    # the form field be left empty — you generally want BOTH on an optional file.
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
+    # Free-text fields; blank=True keeps them optional on the profile-edit form.
+    # CharField needs max_length (DB varchar size); TextField is unbounded prose.
+    student_id = models.CharField(max_length=20, blank=True)   # e.g. "110211732"
+    program = models.CharField(max_length=100, blank=True)     # e.g. "MSc Computer Science"
+    bio = models.TextField(blank=True)                          # short "about me" blurb
+    # auto_now_add stamps the creation time ONCE on insert and never changes it
+    # (contrast with auto_now, which would update on every save).
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
+        # Shown in the admin list and anywhere a UserProfile is printed.
         return f"{self.user.username}'s profile"
 
 
@@ -312,16 +332,30 @@ class Favourite(models.Model):
 
 # ============================================================================
 #  Signal: auto-create a UserProfile whenever a User is created.
-#  Using a post_save signal (rather than creating the profile by hand in the
-#  register view) guarantees EVERY new User gets a profile — including users made
-#  in the admin, a shell, or a data migration — so `user.profile` never 404s.
-#  `created` is True only on INSERT, so updates to an existing user don't re-run it.
-#  raw=True happens during `loaddata`; we skip then so fixtures stay in control.
-#  get_or_create is defensive: it won't crash if a profile somehow already exists.
+#
+#  What a signal is: Django "fires" post_save every time a model row is saved.
+#  @receiver(post_save, sender=USER) subscribes this function to that event for
+#  the User model, so the function runs automatically right after any User save.
+#
+#  Why do it here instead of in the register view: putting the creation in the
+#  signal guarantees that EVERY new User gets a profile no matter how it was made
+#  — the register form, the admin site, `createsuperuser`, a shell, or a data
+#  migration — so code elsewhere can rely on `user.profile` always existing and
+#  never hit a RelatedObjectDoesNotExist / 404.
+#
+#  The three guards below, in order:
+#    * raw=True  → we are inside `loaddata` (loading fixtures). We return early so
+#                  the fixtures themselves stay the single source of truth and we
+#                  don't fight them by inserting extra rows.
+#    * created   → True only on INSERT (a brand-new user). Editing an existing
+#                  user re-fires post_save with created=False, and we skip then so
+#                  we never wipe or duplicate an existing profile.
+#    * get_or_create → defensive: if a matching profile somehow already exists it
+#                  is returned instead of raising a duplicate/IntegrityError.
 # ============================================================================
 @receiver(post_save, sender=USER)
 def create_user_profile(sender, instance, created, raw=False, **kwargs):
-    if raw:
+    if raw:                 # loading fixtures — let them control profile rows
         return
-    if created:
+    if created:             # only for newly-inserted users, not updates
         UserProfile.objects.get_or_create(user=instance)

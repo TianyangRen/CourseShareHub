@@ -46,26 +46,42 @@ class HomeView(TemplateView):
 #  project urls.py.  The views below are the custom parts.
 # ============================================================================
 class RegisterView(CreateView):
-    """Create an account, then log the new user straight in."""
-    form_class = RegisterForm
-    template_name = 'registration/register.html'
-    success_url = reverse_lazy('home')
+    """Sign-up page: create a User account, then log the new user straight in.
+
+    CreateView is the generic class-based view for "show a form on GET, validate
+    and save it on POST". We only declare the three class attributes below and
+    override two hooks (dispatch, form_valid); CreateView handles the rest — the
+    GET rendering, binding POST data, and re-showing the form with errors.
+    """
+    form_class = RegisterForm                       # our RegisterForm (username/email/2×password)
+    template_name = 'registration/register.html'    # the page rendered on GET / on invalid POST
+    success_url = reverse_lazy('home')              # where to go after a successful sign-up
+                                                    # reverse_lazy (not reverse) because this runs
+                                                    # at import time, before URLs are fully loaded.
 
     def dispatch(self, request, *args, **kwargs):
-        # An already-logged-in user has no reason to see the register page.
+        # dispatch() is the very first method the view runs for every request, so
+        # it's the right place to short-circuit: a user who is already logged in
+        # has no reason to see the register page, so bounce them to the home page.
         if request.user.is_authenticated:
             return redirect('home')
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        # Runs only after the form passes validation. CreateView saves the new
-        # User and stores it on self.object; we then log them in immediately so
-        # they don't have to re-type credentials right after signing up. The
-        # matching UserProfile is created automatically by the post_save signal.
+        # form_valid() runs ONLY after the submitted form passes every validation
+        # check (unique email, matching + strong passwords, etc.). The sequence:
+        #   1. super().form_valid(form) → CreateView saves the row, hashing the
+        #      password, and stores the new User on self.object.
+        #   2. The post_save signal fires during that save and auto-creates the
+        #      user's UserProfile — so we don't create it by hand here.
+        #   3. login() opens a session for them immediately, so they land logged
+        #      in and don't have to re-type the credentials they just chose.
+        #   4. messages.success() queues a one-off flash message shown on the
+        #      next page via the messages framework.
         response = super().form_valid(form)   # saves the User -> self.object
         login(self.request, self.object)      # a UserProfile is created by signal
         messages.success(self.request, 'Welcome to CourseShare Hub! Your account is ready.')
-        return response
+        return response  # the redirect to success_url that super() built
 
 
 class ProfileView(LoginRequiredMixin, TemplateView):
