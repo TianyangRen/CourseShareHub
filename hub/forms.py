@@ -127,6 +127,17 @@ class CommentForm(BootstrapMixin, forms.ModelForm):
         fields = ['body']
         widgets = {'body': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Add a comment…'})}
 
+    def clean_body(self):
+        # required=True (from the model's TextField) only rejects a truly
+        # empty string — a body of just spaces/newlines would otherwise pass
+        # straight through and get saved. Stripping here and rejecting what's
+        # left catches that case, and doubles as trimming stray whitespace off
+        # every valid comment before it's saved.
+        body = self.cleaned_data['body'].strip()
+        if not body:
+            raise forms.ValidationError('Comment cannot be empty.')
+        return body
+
 
 # ---- Lei — Search filters + saved searches (§5.3) --------------------------
 class SearchFilterForm(BootstrapMixin, forms.Form):

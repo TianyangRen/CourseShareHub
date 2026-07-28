@@ -185,6 +185,14 @@ class ViewAccessTests(TestCase):
         self.client.post(reverse('add_comment', args=[r.pk]), {'body': ''})
         self.assertFalse(Comment.objects.filter(resource=r).exists())
 
+    def test_whitespace_only_comment_rejected(self):
+        # A body of just spaces passes Django's default "not empty" check, so
+        # this only passes because of CommentForm.clean_body's explicit strip.
+        r = self._mkres()
+        self.client.force_login(self.other)
+        self.client.post(reverse('add_comment', args=[r.pk]), {'body': '   '})
+        self.assertFalse(Comment.objects.filter(resource=r).exists())
+
     def test_category_and_course_directories_ok(self):   # Tianyang's taxonomy pages
         self.assertEqual(self.client.get(reverse('category_list')).status_code, 200)
         self.assertEqual(self.client.get(reverse('course_list')).status_code, 200)
