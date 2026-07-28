@@ -181,26 +181,39 @@ class UserProfile(models.Model):
 #  Kun — UserHistory, DailyVisitLog, ContactMessage  (§5.4 + Contact §5.5)
 # ============================================================================
 class UserHistory(models.Model):
-    """A persistent record of a member's actions (for the History page)."""
+    """A persistent record of a member's actions (for the History page).
+
+    A database-backed "action log": who, when, and what action (view / download
+    / search / upload / favourite). Unlike the temporary browsing list kept in
+    the session, this table is persistent — the History page renders its
+    "Action log" feed from it.
+    """
 
     class Action(models.TextChoices):
+        # TextChoices: the DB stores the short code on the left ('VIEW') while the
+        # page shows the human label on the right ('Viewed'). Templates read the
+        # label via get_action_display.
         VIEW = 'VIEW', 'Viewed'
         DOWNLOAD = 'DOWNLOAD', 'Downloaded'
         SEARCH = 'SEARCH', 'Searched'
         UPLOAD = 'UPLOAD', 'Uploaded'
         FAVOURITE = 'FAVOURITE', 'Favourited'
 
+    # A log belongs to a user: delete the user and their logs go too (CASCADE).
+    # related_name='history' lets user.history.all() reverse-query their records.
     user = models.ForeignKey(USER, on_delete=models.CASCADE, related_name='history')
     action = models.CharField(max_length=12, choices=Action.choices)
+    # Resource is optional: SEARCH actions have none; and if a resource is deleted
+    # SET_NULL keeps the log (nulling the resource) instead of losing the history.
     resource = models.ForeignKey(
         Resource, on_delete=models.SET_NULL, null=True, blank=True, related_name='history_entries',
     )
-    keyword = models.CharField(max_length=200, blank=True)  # for SEARCH actions
-    created_at = models.DateTimeField(auto_now_add=True)
+    keyword = models.CharField(max_length=200, blank=True)  # only SEARCH actions fill this
+    created_at = models.DateTimeField(auto_now_add=True)  # set once on creation, never changes
 
     class Meta:
-        ordering = ['-created_at']
-        verbose_name_plural = 'user histories'
+        ordering = ['-created_at']  # newest first, so the feed reads reverse-chronologically
+        verbose_name_plural = 'user histories'  # admin plural, else it shows "historys"
 
     def __str__(self):
         return f"{self.user} {self.action} @ {self.created_at:%Y-%m-%d %H:%M}"
@@ -212,32 +225,48 @@ class DailyVisitLog(models.Model):
     Either `user` (members) or `session_key` (guests) identifies the visitor;
     the other is left NULL. Because SQL treats NULLs as distinct, the two
     unique_together rules below never collide across the NULL column.
+
+    "One row per visitor per day", storing that day's visit count (care2-style
+    daily counting). The visitor is identified one of two ways: members by user,
+    guests by session_key, with the other left NULL. The History page's "Visits
+    per day" reads from this table.
     """
+    # A member's log: delete the user and it goes too. Guest rows leave this NULL,
+    # hence null=True.
     user = models.ForeignKey(USER, on_delete=models.CASCADE, null=True, blank=True, related_name='visit_logs')
-    session_key = models.CharField(max_length=40, null=True, blank=True)
-    date = models.DateField()
-    visit_count = models.PositiveIntegerField(default=1)
+    session_key = models.CharField(max_length=40, null=True, blank=True)  # guests identified by session id
+    date = models.DateField()  # which day
+    visit_count = models.PositiveIntegerField(default=1)  # how many visits that day
 
     class Meta:
-        ordering = ['-date']
+        ordering = ['-date']  # most recent date first
+        # Two uniqueness rules: one row per user per day; one row per guest
+        # (session) per day. Key point: SQL treats NULLs as distinct, so guest
+        # rows (user=NULL) never collide with each other, and member rows
+        # (session_key=NULL) never collide either — the two rules don't clash.
         unique_together = [('user', 'date'), ('session_key', 'date')]
 
     def __str__(self):
-        who = self.user or f"guest:{self.session_key}"
+        who = self.user or f"guest:{self.session_key}"  # show the user, else mark as a guest
         return f"{who} — {self.date}: {self.visit_count}"
 
 
 class ContactMessage(models.Model):
-    """A message submitted through the Contact Us form.  Owner: Kun."""
+    """A message submitted through the Contact Us form.  Owner: Kun.
+
+    A single message saved when the Contact Us form is submitted. There is no
+    user FK on purpose: guests can send a message without logging in, so it
+    carries its own name/email fields to identify the sender.
+    """
     name = models.CharField(max_length=100)
-    email = models.EmailField()
+    email = models.EmailField()  # EmailField validates the address format
     subject = models.CharField(max_length=200)
     body = models.TextField()
-    is_read = models.BooleanField(default=False)
+    is_read = models.BooleanField(default=False)  # admin marks it read in the backend
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ['-created_at']  # newest messages first
 
     def __str__(self):
         return f"{self.subject} ({self.email})"

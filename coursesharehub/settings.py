@@ -50,6 +50,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # Must come after Session + Authentication middleware (uses request.user/session).
+    # It needs request.session (guest counting) and request.user (member vs guest),
+    # and those attributes are exactly what the two middleware above attach. Placing
+    # it at the end of the list guarantees they have already run. (Kun — §5.4)
     'hub.middleware.VisitCountMiddleware',
 ]
 
