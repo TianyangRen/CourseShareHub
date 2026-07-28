@@ -91,12 +91,14 @@ class CommentForm(BootstrapMixin, forms.ModelForm):
 class SearchFilterForm(BootstrapMixin, forms.Form):
     """Powers the search bar + the four dropdown filters on the list page.
     All fields are optional so an empty search simply lists everything."""
+    # 普通 forms.Form（不是 ModelForm，因为它不保存东西，只是收集查询参数）
     SORT_CHOICES = [
         ('-created_at', 'Newest'),
         ('created_at', 'Oldest'),
         ('-views_count', 'Most viewed'),
         ('-download_count', 'Most downloaded'),
     ]
+    # q 关键词、course/category 用 ModelChoiceField（下拉自动填数据库选项，带 empty_label）、file_type/sort 用 ChoiceField。
     q = forms.CharField(
         required=False, label='Keyword',
         widget=forms.TextInput(attrs={'placeholder': 'Search resources…'}),

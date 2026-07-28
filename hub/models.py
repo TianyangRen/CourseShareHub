@@ -65,14 +65,14 @@ class Course(models.Model):
 class Tag(models.Model):
     """A free-form label attached to resources (many-to-many). Owner: Lei."""
     name = models.CharField(max_length=50, unique=True)
-    slug = models.SlugField(max_length=60, unique=True, blank=True)
+    slug = models.SlugField(max_length=60, unique=True, blank=True) # blank=True → 表单可空，save() 里自动生成
 
     class Meta:
         ordering = ['name']
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.name)
+            self.slug = slugify(self.name) #覆写：slugify(self.name) 把 "Past Exams" → "past-exams"
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -100,7 +100,7 @@ class Resource(models.Model):
     )
     # Block deletion of a category that still has resources (PROTECT).
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name='resources')
-    tags = models.ManyToManyField(Tag, blank=True, related_name='resources')
+    tags = models.ManyToManyField(Tag, blank=True, related_name='resources') # M2M: a resource can have many tags, a tag can belong to many resources，tag.resources.all() 反查、resource.tags.all() 正查
 
     file = models.FileField(
         upload_to='resources/%Y/%m/',
@@ -146,9 +146,10 @@ class Resource(models.Model):
 # ============================================================================
 class SavedSearch(models.Model):
     """A search + filter combination a member chose to save and re-run."""
-    user = models.ForeignKey(USER, on_delete=models.CASCADE, related_name='saved_searches')
+    # 为什么 user 用 CASCADE 而 course/category 用 SET_NULL？ 因为保存搜索离开用户就没意义（级联删），但离开某个课程仍然有意义（保留记录，字段置空）
+    user = models.ForeignKey(USER, on_delete=models.CASCADE, related_name='saved_searches') # 用户删了，他的保存搜索一起删
     keyword = models.CharField(max_length=200, blank=True)
-    course = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True, blank=True)
+    course = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True, blank=True) # 课程删了，保存搜索还在，只是 course 变 NULL
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
     file_type = models.CharField(max_length=10, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

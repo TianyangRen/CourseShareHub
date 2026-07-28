@@ -6,25 +6,29 @@
 
   {# ---- Filter sidebar (keyword + 4 dropdowns) ---- #}
   <div class="col-lg-3 mb-4">
-    <div class="card"><div class="card-body">
-      <h2 class="h6 section-title mb-3"><i data-lucide="sliders-horizontal"></i>Filters</h2>
-      <form method="get">
-        {% include 'partials/_form.html' with form=form %}
-        <button class="btn btn-primary w-100" type="submit"><i data-lucide="filter"></i>Apply</button>
-        <a href="{% url 'resource_list' %}" class="btn btn-outline-primary w-100 mt-2"><i data-lucide="x"></i>Clear</a>
-      </form>
-      {% if user.is_authenticated %}
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h6 section-title mb-3"><i data-lucide="sliders-horizontal"></i>Filters</h2>
+        <form method="get">
+          {% include 'partials/_form.html' with form=form %}
+          <button class="btn btn-primary w-100" type="submit"><i data-lucide="filter"></i>Apply</button>
+          <a href="{% url 'resource_list' %}" class="btn btn-outline-primary w-100 mt-2"><i
+              data-lucide="x"></i>Clear</a>
+        </form>
+        {% if user.is_authenticated %}
         <form method="post" action="{% url 'save_search' %}" class="mt-3 pt-3 border-top">
           {% csrf_token %}
           <input type="hidden" name="keyword" value="{{ form.q.value|default:'' }}">
           <input type="hidden" name="course" value="{{ form.course.value|default:'' }}">
           <input type="hidden" name="category" value="{{ form.category.value|default:'' }}">
           <input type="hidden" name="file_type" value="{{ form.file_type.value|default:'' }}">
-          <button class="btn btn-outline-primary w-100" type="submit"><i data-lucide="bookmark-plus"></i>Save this search</button>
+          <button class="btn btn-outline-primary w-100" type="submit"><i data-lucide="bookmark-plus"></i>Save this
+            search</button>
           <a href="{% url 'saved_searches' %}" class="btn btn-link btn-sm w-100">My saved searches</a>
         </form>
-      {% endif %}
-    </div></div>
+        {% endif %}
+      </div>
+    </div>
   </div>
 
   {# ---- Results grid ---- #}
@@ -34,32 +38,39 @@
     </p>
     <div class="row row-cols-1 row-cols-md-2 g-3">
       {% for resource in resources %}
-        {% include 'partials/_resource_card.html' %}
+      {% include 'partials/_resource_card.html' %}
       {% empty %}
-        <div class="col-12">
-          <div class="card"><div class="card-body text-center py-5">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body text-center py-5">
             <div class="icon-box mx-auto mb-3"><i data-lucide="search-x"></i></div>
             <h2 class="h5">No resources match your search</h2>
             <p class="text-muted mb-0">Try different keywords or clear the filters.</p>
-          </div></div>
+          </div>
         </div>
+      </div>
       {% endfor %}
     </div>
 
     {% if is_paginated %}
-      <nav class="mt-4"><ul class="pagination justify-content-center">
+    <nav class="mt-4">
+      <ul class="pagination justify-content-center">
         {% if page_obj.has_previous %}
-          <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for k, v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v|urlencode }}{% endif %}{% endfor %}">Previous</a>
-          </li>
+        <li class="page-item">
+          <a class="page-link"
+            href="?page={{ page_obj.previous_page_number }}{% for k, v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v|urlencode }}{% endif %}{% endfor %}">Previous</a>
+        </li>
         {% endif %}
-        <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} of {{ paginator.num_pages }}</span></li>
+        <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} of {{ paginator.num_pages
+            }}</span></li>
         {% if page_obj.has_next %}
-          <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for k, v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v|urlencode }}{% endif %}{% endfor %}">Next</a>
-          </li>
+        <li class="page-item">
+          <a class="page-link"
+            href="?page={{ page_obj.next_page_number }}{% for k, v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v|urlencode }}{% endif %}{% endfor %}">Next</a>
+        </li>
         {% endif %}
-      </ul></nav>
+      </ul>
+    </nav>
     {% endif %}
   </div>
 </div>

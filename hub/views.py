@@ -104,7 +104,9 @@ class ResourceListView(ListView):
     context_object_name = 'resources'
     paginate_by = 6
 
+    # 链式构建 queryset
     def get_queryset(self):
+        # 性能：select_related（FK，SQL JOIN 一次取完）+ prefetch_related（M2M tags，另一条查询）→ 避免模板循环里的 N+1 查询。
         qs = (Resource.objects
               .select_related('course', 'category', 'uploader')
               .prefetch_related('tags'))
@@ -120,7 +122,7 @@ class ResourceListView(ListView):
                     Q(title__icontains=cd['q'])
                     | Q(description__icontains=cd['q'])
                     | Q(tags__name__icontains=cd['q'])
-                ).distinct()
+                ).distinct() # 因为跨了 M2M（tags），一条资源多个 tag 会产生重复行，所以末尾 .distinct() 去重。
                 self._record_search(cd['q'])
             if cd.get('course'):
                 qs = qs.filter(course=cd['course'])
@@ -132,6 +134,7 @@ class ResourceListView(ListView):
                 qs = qs.order_by(cd['sort'])
         return qs
 
+    # 搜一次就把关键词塞进 session['recent_searches']（最多 10 个，去重后插到最前），登录用户还写一条 UserHistory。
     def _record_search(self, keyword):
         """Keep recent search keywords in the session (Kun's History page reads these)."""
         searches = self.request.session.get('recent_searches', [])
@@ -198,7 +201,7 @@ def save_search(request):
     if request.method == 'POST':
         form = SavedSearchForm(request.POST)
         if form.is_valid():
-            saved = form.save(commit=False)
+            saved = form.save(commit=False) # 用 form.save(commit=False) 先拿到对象但不入库，补上 saved.user = request.user，再 .save()。为什么 commit=False？ 因为 user 不在表单里（不能让前端伪造别人的 user），必须服务端注入。
             saved.user = request.user
             saved.save()
             messages.success(request, 'Search saved.')
@@ -218,7 +221,7 @@ class SavedSearchListView(LoginRequiredMixin, ListView):
 def delete_saved_search(request, pk):
     """Remove one saved search.  Owner: Lei."""
     if request.method == 'POST':
-        request.user.saved_searches.filter(pk=pk).delete()
+        request.user.saved_searches.filter(pk=pk).delete() # 在用户自己的关系集合里过滤，别人的 pk 删不到，这是很干净的权限隔离写法（不需要额外的 owner 检查）。
         messages.info(request, 'Saved search removed.')
     return redirect('saved_searches')
 
