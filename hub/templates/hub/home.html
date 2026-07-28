@@ -2,6 +2,11 @@
 {% block title %}CourseShare Hub · Share course resources{% endblock %}
 {% block content %}
 
+{% comment %}
+  Hero + CTA: the two buttons branch on user.is_authenticated so a guest is
+  pushed toward "Join now" while a member goes straight to "Upload" — the
+  same is_public / registered-vs-guest split that governs the queryset below.
+{% endcomment %}
 <section class="hero p-4 p-md-5 mb-5 text-center">
   <span class="icon-box lg mb-3" style="background:rgba(255,255,255,.15);color:#fff"><i data-lucide="library"></i></span>
   <h1 class="display-5 fw-bold">Find and share course resources</h1>
@@ -40,6 +45,9 @@
   </div>
 </div>
 
+{% comment %} Each card links to the filtered list, not a separate category
+  page — {{ c.n }} was pre-computed by HomeView's annotate(Count) so no extra
+  query runs per card here. {% endcomment %}
 <h2 class="h4 mb-3 section-title"><i data-lucide="folder-open"></i>Browse by category</h2>
 <div class="row row-cols-2 row-cols-md-3 row-cols-lg-6 g-3 mb-5">
   {% for c in categories %}
@@ -61,6 +69,9 @@
   <h2 class="h4 mb-0 section-title"><i data-lucide="sparkles"></i>Recent resources</h2>
   <a href="{% url 'resource_list' %}" class="btn btn-sm btn-outline-primary">View all<i data-lucide="arrow-right"></i></a>
 </div>
+{% comment %} {% include %} re-renders _resource_card.html once per loop
+  iteration with `resource` in its own context, so the same card markup used
+  on the browse page stays in exactly one place. {% endcomment %}
 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
   {% for resource in recent %}
     {% include 'partials/_resource_card.html' %}

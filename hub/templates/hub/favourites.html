@@ -4,6 +4,9 @@
 <h1 class="h3 mb-4 section-title"><i data-lucide="heart"></i>My Favourites</h1>
 <div class="card mb-4"><div class="card-body">
   <div class="d-grid gap-2">
+    {% comment %} `favourites` here is a queryset of Favourite rows (not
+      Resource rows) — see FavouritesListView.get_queryset() — so every field
+      is reached through f.resource.*. {% endcomment %}
     {% for f in favourites %}
       <a href="{% url 'resource_detail' f.resource.pk %}" class="d-flex justify-content-between align-items-center text-decoration-none">
         <span class="meta"><i data-lucide="file-text"></i>{{ f.resource.title }}</span>
@@ -18,6 +21,9 @@
     {% endfor %}
   </div>
 </div></div>
+{% comment %} is_paginated is added automatically by ListView (paginate_by=10
+  on FavouritesListView) — it's False/absent whenever everything fits on one
+  page, so the whole nav block just doesn't render then. {% endcomment %}
 {% if is_paginated %}
 <nav><ul class="pagination justify-content-center">
   {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>{% endif %}

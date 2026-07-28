@@ -23,6 +23,9 @@ MEDIA = tempfile.mkdtemp()
 
 
 def a_pdf(name='f.pdf', size=32):
+    # Shared helper so every test that needs "some valid uploaded file" doesn't
+    # repeat the SimpleUploadedFile boilerplate — a minimal but real PDF header
+    # is enough for validate_file_extension/size to treat it as legitimate.
     return SimpleUploadedFile(name, b'%PDF-1.4' + b'x' * size, content_type='application/pdf')
 
 
@@ -32,6 +35,9 @@ def tearDownModule():
 
 @override_settings(MEDIA_ROOT=MEDIA)
 class ModelTests(TestCase):
+    """Model-level behaviour: save() overrides, signals, and DB constraints —
+    the things that would silently break without a test if a migration or
+    model edit changed them."""
     def test_category_slug_autofill(self):
         self.assertEqual(Category.objects.create(name='Lecture Notes').slug, 'lecture-notes')
 
@@ -46,6 +52,13 @@ class ModelTests(TestCase):
         self.assertEqual(r.file_type, Resource.FileType.PDF)
 
     def test_favourite_is_unique_per_user_resource(self):
+        # Proves the unique_together=('user', 'resource') constraint on
+        # Favourite is actually enforced at the DB level, not just assumed —
+        # the second create() for the same pair must raise IntegrityError.
+        # The nested transaction.atomic() is required here: once a query
+        # inside a Django test fails, the outer test transaction is left
+        # unusable unless the failing part is wrapped in its own atomic block
+        # that can be rolled back on its own.
         u = User.objects.create_user('c', password='x')
         cat = Category.objects.create(name='N')
         r = Resource.objects.create(title='t', uploader=u, category=cat, file=a_pdf())
@@ -57,6 +70,9 @@ class ModelTests(TestCase):
 
 @override_settings(MEDIA_ROOT=MEDIA)
 class FormTests(TestCase):
+    """Form-level validation edge cases — these back the graded 'reject bad
+    input with a clear error' rubric item, so each test checks the form is
+    invalid AND that the error lands on the expected field."""
     def test_register_rejects_duplicate_email(self):
         User.objects.create_user('x', email='e@e.com', password='x')
         f = RegisterForm(data={'username': 'y', 'email': 'e@e.com',
@@ -80,13 +96,22 @@ class FormTests(TestCase):
 
 @override_settings(MEDIA_ROOT=MEDIA)
 class ViewAccessTests(TestCase):
+    """Who can see/do what: guest vs member visibility (§5.6) and the
+    owner-only edit/delete rule, plus one smoke test per other member's
+    feature (search, saved searches, taxonomy pages) so a regression there
+    fails a test instead of only showing up in the demo."""
     @classmethod
     def setUpTestData(cls):
+        # setUpTestData (not setUp) creates these once per class, wrapped in a
+        # transaction that every test method rolls back from — much faster
+        # than re-creating owner/other/cat before each individual test.
         cls.owner = User.objects.create_user('owner', password='pw')
         cls.other = User.objects.create_user('other', password='pw')
         cls.cat = Category.objects.create(name='Notes')
 
     def _mkres(self, pub=True, owner=None):
+        # Leading underscore marks this as a private test helper, not a test
+        # itself — Django's test runner only collects methods named test_*.
         return Resource.objects.create(title='R', uploader=owner or self.owner,
                                        category=self.cat, is_public=pub, file=a_pdf())
 
@@ -124,6 +149,10 @@ class ViewAccessTests(TestCase):
         self.assertEqual(self.client.get(reverse('history')).status_code, 302)
 
     def test_favourite_toggle(self):
+        # Two POSTs to the same URL must round-trip: first adds the Favourite
+        # row, second removes it — this is what proves toggle_favourite's
+        # get_or_create/delete branching (views.py) actually toggles instead
+        # of only ever adding.
         r = self._mkres()
         self.client.force_login(self.other)
         self.client.post(reverse('toggle_favourite', args=[r.pk]))

@@ -304,12 +304,18 @@ class ContactMessage(models.Model):
 # ============================================================================
 class Comment(models.Model):
     """A comment left on a resource by a registered user."""
+    # Both FKs use CASCADE: a comment has no meaning once either its resource or
+    # its author is gone, so deleting either side should delete the comment too
+    # (contrast with Resource.course, which uses SET_NULL because the resource
+    # itself still makes sense with no course attached).
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name='comments')
     author = models.ForeignKey(USER, on_delete=models.CASCADE, related_name='comments')
     body = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        # Oldest-first, unlike most other models here: a comment thread reads
+        # top-to-bottom in the order it was written, not newest-first.
         ordering = ['created_at']
 
     def __str__(self):
@@ -318,12 +324,18 @@ class Comment(models.Model):
 
 class Favourite(models.Model):
     """A user 'saving' a resource. unique_together stops duplicate favourites."""
+    # related_name choices read naturally from both sides: user.favourites.all()
+    # (what has this user saved?) and resource.favourited_by.all() (who saved
+    # this resource?).
     user = models.ForeignKey(USER, on_delete=models.CASCADE, related_name='favourites')
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name='favourited_by')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-created_at']
+        # DB-level guarantee that a (user, resource) pair can only exist once,
+        # so toggle_favourite's get_or_create can never insert a duplicate row
+        # even under a race (two rapid clicks / concurrent requests).
         unique_together = ('user', 'resource')
 
     def __str__(self):

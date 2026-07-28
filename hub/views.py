@@ -29,9 +29,17 @@ class HomeView(TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        # annotate(n=Count(...)) computes the resource count per category in one
+        # query (no N+1 from calling category.resources.count() in the template),
+        # then order_by('-n', 'name') puts the busiest categories first and
+        # breaks ties alphabetically.
         ctx['categories'] = (Category.objects
                              .annotate(n=Count('resources'))
                              .order_by('-n', 'name')[:6])
+        # is_public=True: the home page is the first thing a guest sees, so it
+        # must never leak a private upload. select_related pre-joins the three
+        # FKs the card partial reads (category/course/uploader) into one query
+        # instead of one extra query per resource.
         ctx['recent'] = (Resource.objects.filter(is_public=True)
                          .select_related('category', 'course', 'uploader')
                          .order_by('-created_at')[:6])
@@ -426,6 +434,13 @@ class ContactView(CreateView):
 def toggle_favourite(request, pk):
     """Add the resource to favourites, or remove it if already favourited."""
     resource = get_object_or_404(Resource, pk=pk)
+    # get_or_create does the "is it already favourited?" check and the insert
+    # in one atomic DB call, so two rapid clicks can't both see "not favourited
+    # yet" and both try to insert — the unique_together on Favourite is the
+    # last line of defence, but get_or_create avoids relying on it in practice.
+    # `created` tells us which branch we're in: True = a new row was inserted
+    # (so this call added the favourite), False = a matching row already
+    # existed (so this call is the "un-favourite" toggle).
     fav, created = Favourite.objects.get_or_create(user=request.user, resource=resource)
     if created:
         UserHistory.objects.create(
@@ -434,6 +449,8 @@ def toggle_favourite(request, pk):
     else:
         fav.delete()
         messages.info(request, 'Removed from your favourites.')
+    # Always back to the resource's own page — favouriting happens from a button
+    # on that page, so that's the only place the user could have triggered this.
     return redirect('resource_detail', pk=pk)
 
 
@@ -444,22 +461,34 @@ def add_comment(request, pk):
     if request.method == 'POST':
         form = CommentForm(request.POST)
         if form.is_valid():
+            # commit=False builds the Comment in memory without saving, because
+            # `resource` and `author` aren't on the form (see CommentForm in
+            # forms.py) — they have to be set here, server-side, from the URL's
+            # pk and the logged-in user, before the row is written.
             comment = form.save(commit=False)
             comment.resource = resource
             comment.author = request.user
             comment.save()
             messages.success(request, 'Your comment has been posted.')
         else:
+            # Invalid (e.g. empty body) just falls through to the redirect below
+            # with an error flash — there's no separate re-render-with-errors
+            # path here since the comment box lives inline on the detail page.
             messages.error(request, 'Your comment could not be posted.')
     return redirect('resource_detail', pk=pk)
 
 
 class FavouritesListView(LoginRequiredMixin, ListView):
+    """The logged-in user's saved resources, paginated.  Owner: Zhihan."""
     template_name = 'hub/favourites.html'
     context_object_name = 'favourites'
     paginate_by = 10
 
     def get_queryset(self):
+        # Scoped to request.user.favourites (the reverse FK from Favourite),
+        # so one user can never see another's saved list. select_related joins
+        # both the Favourite -> Resource and Resource -> Category FKs in one
+        # query, since the template reads f.resource.category.name per row.
         return self.request.user.favourites.select_related('resource', 'resource__category')
 
 

@@ -116,6 +116,12 @@ class CourseForm(BootstrapMixin, forms.ModelForm):
 
 # ---- Zhihan — Comment (§5.5) ----------------------------------------------
 class CommentForm(BootstrapMixin, forms.ModelForm):
+    """The only field a commenter fills in is the body text. `resource` and
+    `author` are deliberately left out: they must come from the URL/session
+    (the resource being viewed, the logged-in user), never from client input,
+    or a user could forge a comment as someone else on a resource they never
+    opened. The view sets both after form.save(commit=False) — see
+    add_comment() in views.py."""
     class Meta:
         model = Comment
         fields = ['body']

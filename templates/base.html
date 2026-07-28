@@ -133,7 +133,13 @@
 
   <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
   <script src="{% static 'js/lucide.min.js' %}"></script>
+  {# Lucide ships icons as inert <i data-lucide="name"> placeholders; this call
+     walks the DOM once after the scripts load and swaps each one for its real
+     inline SVG. It must run after every page's markup exists, hence placement
+     at the very end of <body> rather than in <head>. #}
   <script>lucide.createIcons();</script>
+  {# Per-page hook for extra scripts (e.g. a page-specific handler) without
+     needing a second base template. #}
   {% block extra_js %}{% endblock %}
 </body>
 </html>
