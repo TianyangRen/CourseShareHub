@@ -11,8 +11,7 @@
           href="{% url 'resource_list' %}?q={{ s.keyword|urlencode }}{% if s.course %}&course={{ s.course.pk }}{% endif %}{% if s.category %}&category={{ s.category.pk }}{% endif %}{% if s.file_type %}&file_type={{ s.file_type }}{% endif %}">
           <i data-lucide="search"></i>
           {% if s.keyword %}"{{ s.keyword }}"{% else %}(all resources){% endif %}
-          {% if s.course %}· {{ s.course.code }}{% endif %}{% if s.category %}· {{ s.category.name }}{% endif %}{% if
-          s.file_type %}· {{ s.file_type }}{% endif %}
+          {% if s.course %}· {{ s.course.code }}{% endif %}{% if s.category %}· {{ s.category.name }}{% endif %}{% if s.file_type %}· {{ s.file_type }}{% endif %}
         </a>
         <form method="post" action="{% url 'delete_saved_search' s.pk %}">
           {% csrf_token %}
