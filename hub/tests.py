@@ -17,7 +17,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from .forms import RegisterForm, ResourceForm
-from .models import Category, Resource, Favourite, UserProfile, SavedSearch
+from .models import Category, Resource, Favourite, UserProfile, SavedSearch, Comment
 
 MEDIA = tempfile.mkdtemp()
 
@@ -159,6 +159,31 @@ class ViewAccessTests(TestCase):
         self.assertTrue(Favourite.objects.filter(user=self.other, resource=r).exists())
         self.client.post(reverse('toggle_favourite', args=[r.pk]))
         self.assertFalse(Favourite.objects.filter(user=self.other, resource=r).exists())
+
+    def test_add_comment_requires_login(self):
+        # add_comment is decorated with @login_required, so a guest POST must
+        # be redirected to the login page instead of creating a row.
+        r = self._mkres()
+        resp = self.client.post(reverse('add_comment', args=[r.pk]), {'body': 'nice notes'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertFalse(Comment.objects.filter(resource=r).exists())
+
+    def test_add_comment_creates_comment(self):
+        # Covers the happy path in views.add_comment: form.save(commit=False)
+        # then author/resource are set server-side before save().
+        r = self._mkres()
+        self.client.force_login(self.other)
+        self.client.post(reverse('add_comment', args=[r.pk]), {'body': 'Great notes!'})
+        self.assertTrue(Comment.objects.filter(
+            resource=r, author=self.other, body='Great notes!').exists())
+
+    def test_empty_comment_rejected(self):
+        # CommentForm's body field is required, so posting an empty string
+        # must fail validation and leave no Comment row behind.
+        r = self._mkres()
+        self.client.force_login(self.other)
+        self.client.post(reverse('add_comment', args=[r.pk]), {'body': ''})
+        self.assertFalse(Comment.objects.filter(resource=r).exists())
 
     def test_category_and_course_directories_ok(self):   # Tianyang's taxonomy pages
         self.assertEqual(self.client.get(reverse('category_list')).status_code, 200)
