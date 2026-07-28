@@ -12,6 +12,9 @@ urlpatterns = [
     path('', views.HomeView.as_view(), name='home'),
 
     # Auth / profile / contact (§5.1)
+    # register/profile/profile_edit are the custom auth pages; login/logout/
+    # password-reset use Django's built-in views wired in coursesharehub/urls.py.
+    # The name= is what templates reference, e.g. {% url 'profile_edit' %}.
     path('register/', views.RegisterView.as_view(), name='register'),
     path('profile/', views.ProfileView.as_view(), name='profile'),
     path('profile/edit/', views.ProfileUpdateView.as_view(), name='profile_edit'),
@@ -47,5 +50,5 @@ urlpatterns = [
     path('resources/<int:pk>/comment/', views.add_comment, name='add_comment'),
     path('favourites/', views.FavouritesListView.as_view(), name='favourites'),
     path('about/', views.AboutView.as_view(), name='about'),
-    path('team/', views.TeamView.as_view(), name='team'),
+    path('team/', views.TeamView.as_view(), name='team'),  # Team page (Honghao)
 ]

@@ -58,6 +58,10 @@ class RegisterView(CreateView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
+        # Runs only after the form passes validation. CreateView saves the new
+        # User and stores it on self.object; we then log them in immediately so
+        # they don't have to re-type credentials right after signing up. The
+        # matching UserProfile is created automatically by the post_save signal.
         response = super().form_valid(form)   # saves the User -> self.object
         login(self.request, self.object)      # a UserProfile is created by signal
         messages.success(self.request, 'Welcome to CourseShare Hub! Your account is ready.')
@@ -65,15 +69,22 @@ class RegisterView(CreateView):
 
 
 class ProfileView(LoginRequiredMixin, TemplateView):
-    """The logged-in user's own profile, with their uploads and favourites."""
+    """The logged-in user's own profile, with their uploads and favourites.
+
+    LoginRequiredMixin guards the page: guests are bounced to the login URL and
+    sent back here afterwards via ?next=. This is a read-only summary page.
+    """
     template_name = 'hub/profile.html'
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         user = self.request.user
+        # get_or_create is a safety net for users made before the signal existed.
         profile, _ = UserProfile.objects.get_or_create(user=user)
         ctx['profile'] = profile
+        # Reverse FK lookups (related_name on Resource/Favourite), capped at 20.
         ctx['resources'] = user.resources.all()[:20]
+        # select_related pre-joins the resource row to avoid one query per item.
         ctx['favourites'] = user.favourites.select_related('resource')[:20]
         return ctx
 
@@ -82,9 +93,11 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     """Edit the current user's profile (avatar upload happens here)."""
     form_class = UserProfileForm
     template_name = 'hub/profile_form.html'
-    success_url = reverse_lazy('profile')
+    success_url = reverse_lazy('profile')  # back to the profile page on success
 
     def get_object(self, queryset=None):
+        # Override so the view always edits the *logged-in* user's own profile —
+        # there is no pk in the URL, which stops one user editing another's.
         profile, _ = UserProfile.objects.get_or_create(user=self.request.user)
         return profile
 
@@ -440,11 +453,16 @@ class AboutView(TemplateView):
 
 
 class TeamView(TemplateView):
-    """Team page.  Owner: Honghao (moved for balance)."""
+    """Team page.  Owner: Honghao (moved for balance).
+
+    A plain TemplateView: the member list is hard-coded context (no DB needed)
+    and the template just loops over it to render one card per teammate.
+    """
     template_name = 'hub/team.html'
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        # Each dict → one card in team.html ({{ m.name }} / {{ m.role }} / {{ m.detail }}).
         ctx['members'] = [
             {'name': 'Honghao Zhang', 'role': 'Auth & Project Coordination',
              'detail': 'Registration, login/logout, forgot password, user profile.'},

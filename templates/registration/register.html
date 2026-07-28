@@ -1,4 +1,7 @@
 {% extends 'base.html' %}
+{# Register page (Honghao, §5.1). Renders RegisterForm; the _form.html partial
+   loops over the fields so validation errors (duplicate email, weak/mismatched
+   password) show inline. {% csrf_token %} is required on every POST form. #}
 {% block title %}Register · CourseShare Hub{% endblock %}
 {% block content %}
 <div class="row justify-content-center">

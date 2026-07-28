@@ -165,13 +165,20 @@ class SavedSearch(models.Model):
 #  Honghao — UserProfile  (§5.1 Auth / Profile)
 # ============================================================================
 class UserProfile(models.Model):
-    """Extra per-user data attached one-to-one to the built-in User."""
+    """Extra per-user data attached one-to-one to the built-in User.
+
+    Why OneToOne instead of extending User: the assignment keeps Django's default
+    auth User (username/email/password) and hangs the app-specific fields off it.
+    related_name='profile' means we read them back with `request.user.profile`.
+    on_delete=CASCADE ties the profile's lifetime to the user — delete the user
+    and their profile row is removed with them (no orphan rows left behind).
+    """
     user = models.OneToOneField(USER, on_delete=models.CASCADE, related_name='profile')
-    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)  # ImageField needs Pillow
-    student_id = models.CharField(max_length=20, blank=True)
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)  # ImageField needs Pillow; files land in MEDIA_ROOT/avatars/
+    student_id = models.CharField(max_length=20, blank=True)  # blank=True → optional on the profile-edit form
     program = models.CharField(max_length=100, blank=True)
     bio = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)  # stamped once when the profile is first made
 
     def __str__(self):
         return f"{self.user.username}'s profile"
@@ -305,7 +312,12 @@ class Favourite(models.Model):
 
 # ============================================================================
 #  Signal: auto-create a UserProfile whenever a User is created.
+#  Using a post_save signal (rather than creating the profile by hand in the
+#  register view) guarantees EVERY new User gets a profile — including users made
+#  in the admin, a shell, or a data migration — so `user.profile` never 404s.
+#  `created` is True only on INSERT, so updates to an existing user don't re-run it.
 #  raw=True happens during `loaddata`; we skip then so fixtures stay in control.
+#  get_or_create is defensive: it won't crash if a profile somehow already exists.
 # ============================================================================
 @receiver(post_save, sender=USER)
 def create_user_profile(sender, instance, created, raw=False, **kwargs):

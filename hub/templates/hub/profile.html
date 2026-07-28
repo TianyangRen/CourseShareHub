@@ -1,4 +1,7 @@
 {% extends 'base.html' %}
+{# Profile page (Honghao, §5.1). Read-only summary: avatar/username/email from
+   the User + UserProfile, plus the user's uploads and favourites. Falls back to
+   the first username letter when no avatar is set. #}
 {% block title %}My Profile · CourseShare Hub{% endblock %}
 {% block content %}
 <div class="row g-4">

@@ -1,4 +1,7 @@
 {% extends 'base.html' %}
+{# Login page (Honghao, §5.1). Uses Django's LoginView with our Bootstrap
+   AuthenticationForm. The hidden `next` field carries the page the user was
+   trying to reach so they return there after a successful login. #}
 {% block title %}Log in · CourseShare Hub{% endblock %}
 {% block content %}
 <div class="row justify-content-center">

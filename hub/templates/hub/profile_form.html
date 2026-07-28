@@ -1,4 +1,7 @@
 {% extends 'base.html' %}
+{# Edit-profile page (Honghao, §5.1). Renders UserProfileForm. The
+   enctype="multipart/form-data" on the form is what lets the avatar file
+   actually upload — without it only text fields are sent. #}
 {% block title %}Edit profile · CourseShare Hub{% endblock %}
 {% block content %}
 <div class="row justify-content-center"><div class="col-md-6">
