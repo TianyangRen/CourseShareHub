@@ -333,19 +333,29 @@ class CourseCreateView(LoginRequiredMixin, CreateView):
 class HistoryView(LoginRequiredMixin, TemplateView):
     """Shows the user's activity: today's/total visits (cookie), visits-per-day
     (DB), recently viewed + recent searches (session), and a logged-action feed."""
+    # LoginRequiredMixin: guests are redirected to the login page (this is a
+    # members-only page). TemplateView: we only render data, no form handling.
     template_name = 'hub/history.html'
 
     def get_context_data(self, **kwargs):
+        # Assemble every piece of activity the template needs from three sources:
+        # the session, the DB (DailyVisitLog / UserHistory), and cookies (visit_stats
+        # is added globally by the context processor, so it isn't set here).
         ctx = super().get_context_data(**kwargs)
         session = self.request.session
 
         # 'recently_viewed' holds resource ids, newest first — keep that order.
+        # A single IN query fetches all rows, then we re-sort them back into the
+        # session's order (the DB doesn't preserve the id list's ordering).
         viewed_ids = session.get('recently_viewed', [])
         resources = list(Resource.objects.filter(pk__in=viewed_ids))
         resources.sort(key=lambda r: viewed_ids.index(r.pk))
 
         ctx['recently_viewed'] = resources
         ctx['recent_searches'] = session.get('recent_searches', [])
+        # visit_logs / history are reverse relations (related_name on the models);
+        # slice to cap the rows shown. select_related('resource') joins the resource
+        # in one query to avoid an extra query per history row (N+1).
         ctx['daily_logs'] = self.request.user.visit_logs.all()[:14]
         ctx['history'] = self.request.user.history.select_related('resource')[:30]
         return ctx
@@ -353,7 +363,11 @@ class HistoryView(LoginRequiredMixin, TemplateView):
 
 def clear_history(request):
     """Clear the session-based browsing history (recently viewed + searches)."""
+    # POST-only: clearing state changes data, so it must not happen on a plain GET
+    # (that also keeps it CSRF-protected via the form's token). The DB logs are
+    # kept; only the session-based lists are wiped.
     if request.method == 'POST':
+        # pop(..., None) removes the key if present and is a no-op otherwise (safe).
         request.session.pop('recently_viewed', None)
         request.session.pop('recent_searches', None)
         messages.info(request, 'Your browsing history has been cleared.')
@@ -362,11 +376,16 @@ def clear_history(request):
 
 class ContactView(CreateView):
     """Contact Us — saves a ContactMessage and thanks the visitor.  Owner: Kun."""
+    # CreateView handles the whole form lifecycle: GET renders an empty ContactForm,
+    # POST validates it and, if valid, saves a ContactMessage and redirects.
+    # No LoginRequiredMixin — guests can contact us without an account.
     form_class = ContactForm
     template_name = 'hub/contact.html'
-    success_url = reverse_lazy('home')
+    success_url = reverse_lazy('home')  # where to go after a successful save
 
     def form_valid(self, form):
+        # Runs only after validation passes. Add a flash message, then let the
+        # parent actually save the object and perform the redirect.
         messages.success(self.request, 'Thanks! Your message has been sent.')
         return super().form_valid(form)
 

@@ -119,10 +119,15 @@ class SavedSearchForm(BootstrapMixin, forms.ModelForm):
 
 # ---- Kun — Contact (§5.5, moved here to balance the workload) --------------
 class ContactForm(BootstrapMixin, forms.ModelForm):
+    # A ModelForm built straight from ContactMessage: the fields below map to model
+    # fields, so form.save() creates the row for us. is_read/created_at are excluded
+    # on purpose — they're set server-side, not by the visitor. BootstrapMixin (first
+    # in the MRO) styles every widget. The email field is validated as a real address
+    # automatically because the model uses EmailField.
     class Meta:
         model = ContactMessage
         fields = ['name', 'email', 'subject', 'body']
-        widgets = {'body': forms.Textarea(attrs={'rows': 5})}
+        widgets = {'body': forms.Textarea(attrs={'rows': 5})}  # taller multi-line box for the message
 
 
 # ---- Bootstrap-styled versions of Django's built-in auth forms -------------

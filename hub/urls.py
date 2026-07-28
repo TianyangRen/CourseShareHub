@@ -15,7 +15,7 @@ urlpatterns = [
     path('register/', views.RegisterView.as_view(), name='register'),
     path('profile/', views.ProfileView.as_view(), name='profile'),
     path('profile/edit/', views.ProfileUpdateView.as_view(), name='profile_edit'),
-    path('contact/', views.ContactView.as_view(), name='contact'),
+    path('contact/', views.ContactView.as_view(), name='contact'),  # Contact Us (Kun, §5.5)
 
     # Browse (§5.3)
     path('resources/', views.ResourceListView.as_view(), name='resource_list'),
@@ -36,7 +36,9 @@ urlpatterns = [
     path('saved-searches/save/', views.save_search, name='save_search'),
     path('saved-searches/<int:pk>/delete/', views.delete_saved_search, name='delete_saved_search'),
 
-    # Sessions / cookies / history (§5.4)
+    # Sessions / cookies / history (§5.4, Kun)
+    # CBVs need .as_view(); the FBV clear_history is passed as the function itself.
+    # The 'name=' is what templates reference via {% url 'history' %} / 'clear_history'.
     path('history/', views.HistoryView.as_view(), name='history'),
     path('history/clear/', views.clear_history, name='clear_history'),
 
