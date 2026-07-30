@@ -113,7 +113,6 @@ class CourseForm(BootstrapMixin, forms.ModelForm):
         fields = ['code', 'title', 'description', 'term']
         widgets = {'description': forms.Textarea(attrs={'rows': 2})}
 
-
 # ---- Zhihan — Comment (§5.5) ----------------------------------------------
 class CommentForm(BootstrapMixin, forms.ModelForm):
     """The only field a commenter fills in is the body text. `resource` and
