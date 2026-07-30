@@ -10,6 +10,7 @@ comment on, and favourite materials; admins manage everything.
 - 👥 Team: Honghao Zhang · Tianyang Ren · Lei Jiang · Kun Lan · Zhihan Zhang
 
 ## Tech stack
+
 Python 3.14 · Django 6.0 · SQLite (JSON fixtures) · Bootstrap 5
 
 ## Local setup
@@ -45,6 +46,7 @@ Then open http://127.0.0.1:8000/ (admin at `/admin/`).
 > in the terminal running `runserver` (no external email service needed).
 
 ## Project layout
+
 ```
 coursesharehub/   project settings + root URLs
 hub/              main app: models.py · views.py · forms.py · urls.py + templates
@@ -53,3 +55,17 @@ static/           css/js/img (theme.css)
 media/            user uploads (gitignored)
 docs/             PROJECT_PLAN.md
 ```
+
+## Team workflow
+
+- Work on a personal branch: `feat/<name>-<module>`; open a PR into `main`.
+- Commit little and often with **descriptive** messages
+  (e.g. `Add UserHistory session tracking`), spread across weeks.
+- **Add `comp8347proj` as a repository collaborator** (course requirement).
+
+## Academic integrity
+
+Per the course outline, using AI tools or external source code results in a
+grade of **0**. `PROJECT_PLAN.md` is a design blueprint only — every member must
+write and understand their own code. The individual viva/Q&A is the highest-
+weighted grading component.
